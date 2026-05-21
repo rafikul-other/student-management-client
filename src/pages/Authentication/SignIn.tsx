@@ -225,11 +225,11 @@ const SignIn: React.FC = () => {
                 For test password - <span className="font-bold">56789</span>{" "}
               </p>
               <p className="text-red-600 font-bold">
-                Do not use these for production use -{" "}
+                This is Fully for Testing Purpose -{" "}
                 <span className=""> Choose Admin On DropDown</span>{" "}
               </p>
               <p className="text-red-600 font-bold">
-               Please wait Some Seconds - I am using Free Hosting Services , So It may take some time
+                Please wait Some Seconds - I am using Free Hosting Services , So It may take some time
               </p>
 
               <form onSubmit={handleSumit}>
@@ -341,7 +341,7 @@ const SignIn: React.FC = () => {
                         <div className="relative">
                           <input
                             type="text"
-                            placeholder="Enter your email"
+                            placeholder="Enter your username"
                             onChange={(e) => setId(e.target.value)}
                             value={id}
                             className="w-full rounded-lg border border-stroke bg-transparent py-4 pl-6 pr-10 text-black outline-none focus:border-primary focus-visible:shadow-none dark:border-form-strokedark dark:bg-form-input dark:text-white dark:focus:border-primary"
