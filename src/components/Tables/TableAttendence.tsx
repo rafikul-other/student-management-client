@@ -1,253 +1,3 @@
-// import React, { useEffect, useState } from "react";
-// import axios from "axios";
-// import BaseUrl from "../../BaseUrl/BaseUrl";
-// import toast, { Toaster } from "react-hot-toast";
-// import { useParams } from "react-router-dom";
-
-// interface SingleAttendance {
-//   _id: number;
-//   time: string;
-//   present: string;
-// }
-
-// interface Attendance {
-//   _id: number;
-//   time: string;
-//   present: string;
-// }
-
-// interface Student {
-//   _id: number;
-//   name: string;
-//   subject: string;
-//   attendence: Attendance[];
-// }
-
-// const TableAttendence: React.FC = () => {
-//   const [students, setStudents] = useState<SingleAttendance[]>([]);
-//   const [searchItem, setSearchItem] = useState("");
-//   const [singleStudent, setSingleStudent] = useState<Student>();
-
-//   const { id } = useParams();
-
-//   useEffect(() => {
-//     fetchStudents();
-//   }, []);
-
-//   const fetchStudents = async () => {
-//     try {
-//       const res = await axios.get(`${BaseUrl}/students/fetchSingle/${id}`);
-//       setStudents(res.data.data.attendence);
-//       setSingleStudent(res.data.data);
-//       toast.success("Students fetched successfully");
-//     } catch (error) {
-//       console.error("Error fetching students:", error);
-//       toast.error("Error fetching students");
-//     }
-//   };
-
-//   const [currentPage, setCurrentPage] = useState(1);
-//   const [studentsPerPage] = useState(8);
-
-//   const filteredSearch = students.filter((item) =>
-//     item.time.toLowerCase().includes(searchItem.toLowerCase())
-//   );
-
-//   // Pagination Logic
-//   const totalPages = Math.ceil(filteredSearch.length / studentsPerPage);
-//   const indexOfLastStudent = currentPage * studentsPerPage;
-//   const indexOfFirstStudent = indexOfLastStudent - studentsPerPage;
-//   const currentStudents = filteredSearch.slice(
-//     indexOfFirstStudent,
-//     indexOfLastStudent
-//   );
-
-//   const handlePageChange = (pageNumber: number) => {
-//     setCurrentPage(pageNumber);
-//   };
-
-//   const handleNextPage = () => {
-//     if (currentPage < totalPages) setCurrentPage(currentPage + 1);
-//   };
-
-//   const handlePreviousPage = () => {
-//     if (currentPage > 1) setCurrentPage(currentPage - 1);
-//   };
-
-//   const handleFirstPage = () => {
-//     setCurrentPage(1);
-//   };
-
-//   const handleLastPage = () => {
-//     setCurrentPage(totalPages);
-//   };
-
-//   const todayDate = () => {
-//     const date = new Date();
-//     return date.toLocaleDateString([], {
-//       timeZone: "Asia/Kolkata",
-//       weekday: "long",
-//       year: "numeric",
-//       month: "long",
-//       day: "numeric",
-//     });
-//   };
-
-//   const currentDate = todayDate();
-
-//   const updateAttendence = () => {
-//     alert("Attendence");
-//   };
-
-//   const handleExport = () => {
-//     if (!singleStudent) {
-//       toast.error("No student data available for export");
-//       return;
-//     }
-
-//     // CSV Header with the student's name
-//     const csvHeader = `Student Name: ${singleStudent.name}\nDate,Attendance\n`;
-
-//     // Map the attendance records
-//     const csvRows = students.map((student) => {
-//       return `${student.time},${student.present}`;
-//     });
-
-//     // Combine the header and rows
-//     const csvContent = csvHeader + csvRows.join("\n");
-
-//     // Create and download the CSV file
-//     const blob = new Blob([csvContent], { type: "text/csv" });
-//     const url = URL.createObjectURL(blob);
-//     const link = document.createElement("a");
-//     link.href = url;
-//     link.download = `${singleStudent.name}_attendance.csv`;
-//     link.click();
-//     URL.revokeObjectURL(url);
-//   };
-
-//   return (
-//     <div className="rounded-sm border border-stroke bg-white px-5 pt-6 pb-2.5 shadow-default dark:border-strokedark dark:bg-boxdark sm:px-7.5 xl:pb-1">
-//       <h4 className="mb-6 text-xl font-semibold text-black dark:text-white">
-//         {currentDate}
-//       </h4>
-
-//       <Toaster reverseOrder={false} position="top-right" />
-
-//       <div className="mt-10 mb-10">
-//         <form>
-//           <div className="relative flex flex-col justify-between items-center md:flex-row">
-//             <input
-//               type="text"
-//               placeholder="Type to search..."
-//               onChange={(e) => setSearchItem(e.target.value)}
-//               value={searchItem}
-//               className="w-full bg-transparent pl-9 pr-4 border text-black focus:outline-none dark:text-white xl:w-125 placeholder:font-semibold placeholder:text-xl p-4 rounded-lg bg-gray-800"
-//             />
-//             <button
-//               onClick={(e) => {
-//                 e.preventDefault();
-//                 handleExport();
-//               }}
-//               className="rounded-lg bg-primary px-6 py-2 text-white transition hover:bg-opacity-90 font-semibold mt-5 md:mt-0"
-//             >
-//               Export As CSV
-//             </button>
-//           </div>
-//         </form>
-//       </div>
-
-//       <div className="flex flex-col">
-//         <div className="grid grid-cols-3 rounded-sm bg-gray-2 dark:bg-meta-4 sm:grid-cols-3">
-//           <div className="p-2.5 xl:p-5">
-//             <h5 className="text-sm font-medium xsm:text-base">Date</h5>
-//           </div>
-//           <div className="p-2.5 text-center xl:p-5">
-//             <h5 className="text-sm font-medium xsm:text-base">Attendence</h5>
-//           </div>
-//           <div className="p-2.5 text-center xl:p-5">
-//             <h5 className="text-sm font-medium xsm:text-base">Update</h5>
-//           </div>
-//         </div>
-
-//         {currentStudents.map((student, id) => (
-//           <div
-//             className="grid grid-cols-3 sm:grid-cols-3 border-b border-stroke dark:border-strokedark  hover:bg-gray-700 "
-//             key={id}
-//           >
-//             <div className="flex items-center gap-3 p-2.5 xl:p-5">
-//               <p className="text-black dark:text-white">{student.time}</p>
-//             </div>
-
-//             <div className="flex items-center justify-center p-2.5 xl:p-5">
-//               <p className="text-black dark:text-white">{student.present}</p>
-//             </div>
-
-//             <div className="flex items-center justify-center p-2.5 xl:p-5">
-//               <button
-//                 onClick={updateAttendence}
-//                 className="mt-4 rounded-lg bg-red px-6 py-2 text-white transition hover:bg-opacity-90 font-semibold cursor-pointer"
-//               >
-//                 Update
-//               </button>
-//             </div>
-//           </div>
-//         ))}
-//       </div>
-
-//       {/* Pagination Controls */}
-//       <div className="flex items-center justify-center mt-6 overflow-x-auto space-x-2">
-//         <button
-//           onClick={handleFirstPage}
-//           disabled={currentPage === 1}
-//           className="px-3 py-1 rounded border dark:border-strokedark dark:text-white hover:bg-gray-200 dark:hover:bg-gray-700"
-//         >
-//           First
-//         </button>
-//         <button
-//           onClick={handlePreviousPage}
-//           disabled={currentPage === 1}
-//           className="px-3 py-1 rounded border dark:border-strokedark dark:text-white hover:bg-gray-200 dark:hover:bg-gray-700"
-//         >
-//           {"<"}
-//         </button>
-//         {[...Array(totalPages)]
-//           .map((_, index) => (
-//             <button
-//               key={index}
-//               onClick={() => handlePageChange(index + 1)}
-//               className={`px-3 py-1 rounded border dark:border-strokedark dark:text-white hover:bg-gray-200 dark:hover:bg-gray-700 ${
-//                 currentPage === index + 1 ? "bg-primary text-white" : ""
-//               }`}
-//             >
-//               {index + 1}
-//             </button>
-//           ))
-//           .slice(
-//             Math.max(0, currentPage - 2),
-//             Math.min(currentPage + 1, totalPages)
-//           )}
-//         <button
-//           onClick={handleNextPage}
-//           disabled={currentPage === totalPages}
-//           className="px-3 py-1 rounded border dark:border-strokedark dark:text-white hover:bg-gray-200 dark:hover:bg-gray-700"
-//         >
-//           {">"}
-//         </button>
-//         <button
-//           onClick={handleLastPage}
-//           disabled={currentPage === totalPages}
-//           className="px-3 py-1 rounded border dark:border-strokedark dark:text-white hover:bg-gray-200 dark:hover:bg-gray-700"
-//         >
-//           Last
-//         </button>
-//       </div>
-//     </div>
-//   );
-// };
-
-// export default TableAttendence;
-
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import BaseUrl from "../../BaseUrl/BaseUrl";
@@ -296,10 +46,10 @@ const TableAttendence: React.FC = () => {
       const res = await axios.get(`${BaseUrl}/students/fetchSingle/${id}`);
       setStudents(res.data.data.attendence);
       setSingleStudent(res.data.data);
-      toast.success("Students fetched successfully");
+      toast.success(`${res?.data?.data?.name?.toUpperCase()} Attendance Loaded Successfully`);
     } catch (error) {
-      console.error("Error fetching students:", error);
-      toast.error("Error fetching students");
+      console.error("Error Loading Attendance:", error);
+      toast.error("Error Loading Attendance");
     }
   };
 
@@ -487,9 +237,8 @@ const TableAttendence: React.FC = () => {
             <button
               key={index}
               onClick={() => handlePageChange(index + 1)}
-              className={`px-3 py-1 rounded border dark:border-strokedark dark:text-white hover:bg-gray-200 dark:hover:bg-gray-700 ${
-                currentPage === index + 1 ? "bg-primary text-white" : ""
-              }`}
+              className={`px-3 py-1 rounded border dark:border-strokedark dark:text-white hover:bg-gray-200 dark:hover:bg-gray-700 ${currentPage === index + 1 ? "bg-primary text-white" : ""
+                }`}
             >
               {index + 1}
             </button>
@@ -605,11 +354,10 @@ const TableAttendence: React.FC = () => {
                     present: "Present",
                   })
                 }
-                className={`flex-1 py-3 rounded-lg font-medium transition-all duration-300 focus:outline-none ${
-                  selectedAttendance.present === "Present"
+                className={`flex-1 py-3 rounded-lg font-medium transition-all duration-300 focus:outline-none ${selectedAttendance.present === "Present"
                     ? "bg-primary text-white shadow-lg hover:bg-primary-dark"
                     : "bg-gray-200 text-gray-600 hover:bg-gray-300"
-                }`}
+                  }`}
               >
                 Present
               </button>
@@ -620,11 +368,10 @@ const TableAttendence: React.FC = () => {
                     present: "Absent",
                   })
                 }
-                className={`flex-1 py-3 rounded-lg font-medium transition-all duration-300 focus:outline-none ${
-                  selectedAttendance.present === "Absent"
+                className={`flex-1 py-3 rounded-lg font-medium transition-all duration-300 focus:outline-none ${selectedAttendance.present === "Absent"
                     ? "bg-red-500 text-white shadow-lg hover:bg-red-600"
                     : "bg-gray-200 text-gray-600 hover:bg-gray-300"
-                }`}
+                  }`}
               >
                 Absent
               </button>

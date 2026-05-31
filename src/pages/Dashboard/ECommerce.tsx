@@ -30,7 +30,6 @@ const Dashboard: React.FC = () => {
     try {
       const res = await axios.get(`${BaseUrl}/students/fetch`);
       setStudents(res.data.totalStudents);
-      console.log("Total Students fetched successfully");
     } catch (error) {
       console.error("Error fetching total students:", error);
     }

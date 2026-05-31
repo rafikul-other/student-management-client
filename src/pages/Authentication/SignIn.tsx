@@ -56,8 +56,9 @@ const SignIn: React.FC = () => {
         if (res.data.success) {
           localStorage.setItem("type", typeUser);
           localStorage.setItem("name", res.data.data.name);
+          localStorage.setItem("studentId", res.data.data._id);
+          localStorage.setItem("about", res.data.data.aboutMe || "");
           toast.success("Redirecting You to Calendar");
-          console.log(res.data.data.name);
           setTimeout(() => {
             navigate("/admin/calendar");
           }, 2000);

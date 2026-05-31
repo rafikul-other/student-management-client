@@ -12,7 +12,7 @@ interface ModalProps {
 const Modal: React.FC<ModalProps> = ({ date, onClose }) => {
   const [name, setName] = useState("");
   const [subject, setSubject] = useState("");
-  const [present, setPresent] = useState("Present");
+  const [present, setPresent] = useState("");
 
   const formatDate = () => {
     return new Date().toLocaleDateString("en-US", {
@@ -28,8 +28,6 @@ const Modal: React.FC<ModalProps> = ({ date, onClose }) => {
 
   const handleSaveDate = async () => {
     const formattedTime = `${exactDate} ${exactYear}`;
-
-    console.log(name + " " + subject + " " + present + " " + formattedTime);
 
     if (!name || !subject || !formattedTime || !present) {
       toast.error("Please fill all fields");
@@ -94,7 +92,8 @@ const Modal: React.FC<ModalProps> = ({ date, onClose }) => {
           ></input>
         </div>
         <div className="mb-4">
-          <label className="block mb-2 text-white">Your Attendence</label>
+          <label className="block mb-2 text-white">Your Attendance</label>
+
           <select
             id="type"
             name="type"
@@ -103,6 +102,10 @@ const Modal: React.FC<ModalProps> = ({ date, onClose }) => {
             className="w-full p-2 border border-gray-300 rounded-md bg-slate-700"
             required
           >
+            <option value="" disabled hidden>
+              Choose One
+            </option>
+
             <option value="Present">Present</option>
             <option value="Absent">Absent</option>
           </select>

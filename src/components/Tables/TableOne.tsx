@@ -34,10 +34,10 @@ const TableOne: React.FC = () => {
     try {
       const res = await axios.get(`${BaseUrl}/students/fetch`);
       setStudents(res.data.data);
-      toast.success("Students fetched successfully");
+      toast.success("Students Loaded Successfully");
     } catch (error) {
-      console.error("Error fetching students:", error);
-      toast.error("Error fetching students");
+      console.error("Error Loading Students:", error);
+      toast.error("Error Loading Students");
     }
   };
 
@@ -225,9 +225,8 @@ const TableOne: React.FC = () => {
             <button
               key={index}
               onClick={() => handlePageChange(index + 1)}
-              className={`px-3 py-1 rounded border dark:border-strokedark dark:text-white hover:bg-gray-200 dark:hover:bg-gray-700 ${
-                currentPage === index + 1 ? "bg-primary text-white" : ""
-              }`}
+              className={`px-3 py-1 rounded border dark:border-strokedark dark:text-white hover:bg-gray-200 dark:hover:bg-gray-700 ${currentPage === index + 1 ? "bg-primary text-white" : ""
+                }`}
             >
               {index + 1}
             </button>
@@ -256,7 +255,7 @@ const TableOne: React.FC = () => {
         <AttendenceTableModal
           openAttendenceModal={openAttendenceModal}
           handleCloseAttendenceModal={handleCloseAttendenceModal}
-          // students={students}
+        // students={students}
         />
       )}
     </div>

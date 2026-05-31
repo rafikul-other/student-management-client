@@ -1,11 +1,21 @@
+import axios from "axios";
 import React, { useState } from "react";
+import toast, { Toaster } from "react-hot-toast";
 import Breadcrumb from "../components/Breadcrumbs/Breadcrumb";
+import BaseUrl from "../BaseUrl/BaseUrl";
 
 const Profile: React.FC = () => {
   const [aboutMe, setAboutMe] = useState("");
   const [isEditing, setIsEditing] = useState(false);
 
+  const name = localStorage.getItem("name");
+  const type = localStorage.getItem("type");
+  const about = localStorage.getItem("about");
+  const studentId = localStorage.getItem("studentId");
+  const isStudent = type === "Student";
+
   const handleEdit = () => {
+    setAboutMe(about || "");
     setIsEditing(true);
   };
 
@@ -14,16 +24,28 @@ const Profile: React.FC = () => {
     setAboutMe("");
   };
 
-  const handleSave = () => {
-    localStorage.setItem("about", aboutMe);
-    setIsEditing(false);
+  const handleSave = async () => {
+    if (isStudent && studentId) {
+      try {
+        const res = await axios.put(
+          `${BaseUrl}/students/updateAboutMe/${studentId}`,
+          { aboutMe }
+        );
+        console.log(res.data);
+        if (res.data.success) {
+          localStorage.setItem("about", aboutMe);
+          toast.success("About Me updated successfully");
+          setIsEditing(false);
+        }
+      } catch (error) {
+        console.error("Error updating aboutMe:", error);
+        toast.error("Failed to update About Me");
+      }
+    } else {
+      localStorage.setItem("about", aboutMe);
+      setIsEditing(false);
+    }
   };
-
-  const name = localStorage.getItem("name");
-
-  const type = localStorage.getItem("type");
-
-  const about = localStorage.getItem("about");
 
   return (
     <>
@@ -41,9 +63,9 @@ const Profile: React.FC = () => {
                 About Me
               </h4>
 
-              {/* Display About Me section or input for editing */}
               {isEditing ? (
                 <div className="mt-4">
+                  <Toaster reverseOrder={false} position="top-right" />
                   <textarea
                     value={aboutMe}
                     onChange={(e) => setAboutMe(e.target.value)}
@@ -67,7 +89,9 @@ const Profile: React.FC = () => {
                 </div>
               ) : (
                 <div className="mt-4.5">
-                  <p>{about ? about : "* Please Enter About Yourself Here *"}</p>
+                  <p>
+                    {about ? about : "* Please Enter About Yourself Here *"}
+                  </p>
                   <button
                     onClick={handleEdit}
                     className="mt-4 rounded-lg border border-primary bg-primary px-6 py-2 text-white transition hover:bg-opacity-90 font-semibold"
@@ -85,5 +109,3 @@ const Profile: React.FC = () => {
 };
 
 export default Profile;
-
-
