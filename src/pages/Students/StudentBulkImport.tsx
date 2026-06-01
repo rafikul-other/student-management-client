@@ -12,15 +12,17 @@ const StudentBulkImport: React.FC = () => {
   const navigate = useNavigate();
 
   const parseCSV = (text: string) => {
-    const lines = text.trim().split("\n");
+    const lines = text.trim().split(/\r?\n/);
     const rows: { name: string; subject: string; email?: string }[] = [];
     for (let i = 0; i < lines.length; i++) {
       const parts = lines[i].split(",").map((p) => p.trim());
+      const isHeader = i === 0 && parts[0]?.toLowerCase() === "name" && parts[1]?.toLowerCase().startsWith("subject");
+      if (isHeader) continue;
       if (parts.length >= 2) {
         rows.push({ name: parts[0], subject: parts[1], email: parts[2] || "" });
       }
     }
-    return rows;
+    return rows.filter((row) => row.name && row.subject);
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {

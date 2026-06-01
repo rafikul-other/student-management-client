@@ -2,13 +2,17 @@ import React, { useEffect, useState } from "react";
 import apiClient from "../../api/apiClient";
 import { ENDPOINTS } from "../../api/endpoints";
 import { showToast } from "../../hooks/useToast";
+import { useAuth } from "../../context/AuthContext";
 
 const DepartmentManagers: React.FC = () => {
+  const { user } = useAuth();
   const [managers, setManagers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState({ name: "", email: "", password: "", department: "" });
   const [submitting, setSubmitting] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editForm, setEditForm] = useState({ name: "", email: "", department: "", password: "" });
 
   useEffect(() => {
     apiClient.get(ENDPOINTS.departmentManagers.list)
@@ -16,6 +20,10 @@ const DepartmentManagers: React.FC = () => {
       .catch(() => showToast.error("Failed to load managers"))
       .finally(() => setLoading(false));
   }, []);
+
+  const visibleManagers = user?.role === "DepartmentManager"
+    ? managers.filter((m) => m._id === user._id)
+    : managers;
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -44,6 +52,39 @@ const DepartmentManagers: React.FC = () => {
       showToast.error("Failed to delete manager");
     }
   };
+
+  const startEdit = (manager: any) => {
+    setEditingId(manager._id);
+    setEditForm({ name: manager.name, email: manager.email, department: manager.department, password: "" });
+  };
+
+  const cancelEdit = () => {
+    setEditingId(null);
+    setEditForm({ name: "", email: "", department: "", password: "" });
+  };
+
+  const handleEdit = async (id: string) => {
+    const payload: any = {
+      name: editForm.name,
+      email: editForm.email,
+      department: editForm.department,
+    };
+    if (editForm.password) {
+      payload.password = editForm.password;
+    }
+    try {
+      const res = await apiClient.put(ENDPOINTS.departmentManagers.update(id), payload);
+      setManagers((prev) => prev.map((m) => (m._id === id ? res.data.data : m)));
+      setEditingId(null);
+      setEditForm({ name: "", email: "", department: "", password: "" });
+      showToast.success("Manager updated successfully");
+    } catch (error: any) {
+      showToast.error(error?.response?.data?.message || "Failed to update manager");
+    }
+  };
+
+  const canEditPassword = user?.role === "SuperAdmin" || user?.role === "Admin";
+  const canEditOrDelete = user?.role === "SuperAdmin" || user?.role === "Admin";
 
   return (
     <div className="space-y-6">
@@ -74,7 +115,7 @@ const DepartmentManagers: React.FC = () => {
 
       {loading ? (
         <div className="flex justify-center py-12"><div className="animate-spin rounded-full h-12 w-12 border-4 border-primary border-t-transparent" /></div>
-      ) : managers.length === 0 ? (
+      ) : visibleManagers.length === 0 ? (
         <div className="text-center py-12 text-gray-500">No department managers found</div>
       ) : (
         <div className="rounded-xl border border-stroke bg-white shadow-default dark:border-strokedark dark:bg-boxdark overflow-hidden">
@@ -88,14 +129,46 @@ const DepartmentManagers: React.FC = () => {
               </tr>
             </thead>
             <tbody>
-              {managers.map((manager) => (
+              {visibleManagers.map((manager) => (
                 <tr key={manager._id} className="border-b border-stroke dark:border-strokedark hover:bg-gray-3 dark:hover:bg-meta-4/30">
-                  <td className="py-4 px-6 font-medium text-black dark:text-white">{manager.name}</td>
-                  <td className="py-4 px-6 text-gray-500">{manager.email}</td>
-                  <td className="py-4 px-6 text-gray-500">{manager.department}</td>
-                  <td className="py-4 px-6 text-center">
-                    <button onClick={() => handleDelete(manager._id)} className="text-red-500 hover:text-red-700 text-sm font-medium">Delete</button>
-                  </td>
+                  {editingId === manager._id ? (
+                    <>
+                      <td className="py-4 px-6">
+                        <input type="text" value={editForm.name} onChange={(e) => setEditForm({ ...editForm, name: e.target.value })} className="w-full rounded-lg border border-stroke bg-transparent py-2 px-2 text-black outline-none focus:border-primary dark:border-form-strokedark dark:bg-form-input dark:text-white text-sm" />
+                      </td>
+                      <td className="py-4 px-6">
+                        <input type="email" value={editForm.email} onChange={(e) => setEditForm({ ...editForm, email: e.target.value })} className="w-full rounded-lg border border-stroke bg-transparent py-2 px-2 text-black outline-none focus:border-primary dark:border-form-strokedark dark:bg-form-input dark:text-white text-sm" />
+                      </td>
+                      <td className="py-4 px-6">
+                        <input type="text" value={editForm.department} onChange={(e) => setEditForm({ ...editForm, department: e.target.value })} className="w-full rounded-lg border border-stroke bg-transparent py-2 px-2 text-black outline-none focus:border-primary dark:border-form-strokedark dark:bg-form-input dark:text-white text-sm" />
+                      </td>
+                      <td className="py-4 px-6 text-center">
+                        <div className="flex flex-col gap-1">
+                          {canEditPassword && (
+                            <input type="password" placeholder="New password" value={editForm.password} onChange={(e) => setEditForm({ ...editForm, password: e.target.value })} className="w-full rounded-lg border border-stroke bg-transparent py-2 px-2 text-black outline-none focus:border-primary dark:border-form-strokedark dark:bg-form-input dark:text-white text-sm" />
+                          )}
+                          <div className="flex gap-2 justify-center">
+                            <button onClick={() => handleEdit(manager._id)} className="text-green-500 hover:text-green-700 text-sm font-medium">Save</button>
+                            <button onClick={cancelEdit} className="text-gray-500 hover:text-gray-700 text-sm font-medium">Cancel</button>
+                          </div>
+                        </div>
+                      </td>
+                    </>
+                  ) : (
+                    <>
+                      <td className="py-4 px-6 font-medium text-black dark:text-white">{manager.name}</td>
+                      <td className="py-4 px-6 text-gray-500">{manager.email}</td>
+                      <td className="py-4 px-6 text-gray-500">{manager.department}</td>
+                      <td className="py-4 px-6 text-center">
+                        <div className="flex gap-2 justify-center">
+                          <button onClick={() => startEdit(manager)} className="text-blue-500 hover:text-blue-700 text-sm font-medium">Edit</button>
+                          {canEditOrDelete && (
+                            <button onClick={() => handleDelete(manager._id)} className="text-red-500 hover:text-red-700 text-sm font-medium">Delete</button>
+                          )}
+                        </div>
+                      </td>
+                    </>
+                  )}
                 </tr>
               ))}
             </tbody>

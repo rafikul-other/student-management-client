@@ -1,5 +1,6 @@
 import { Routes, Route, Navigate } from "react-router-dom";
 import ProtectedRoute from "./ProtectedRoute";
+import { useAuth } from "../context/AuthContext";
 import Dashboard from "../pages/Dashboard/Dashboard";
 import Calendar from "../pages/Calendar/Calendar";
 import Profile from "../pages/Profile/Profile";
@@ -12,30 +13,22 @@ import DepartmentManagers from "../pages/DepartmentManagers/DepartmentManagers";
 import Settings from "../pages/Settings/Settings";
 
 const AppRouter = () => {
-  const token = localStorage.getItem("token");
-  const userStr = localStorage.getItem("user");
-  const user = userStr ? JSON.parse(userStr) : null;
-  const isAuthenticated = !!(token && user);
-
-  if (!isAuthenticated) {
-    return <Routes><Route path="*" element={<Navigate to="/" replace />} /></Routes>;
-  }
-
-  const hasRole = (...roles: string[]) => user ? roles.includes(user.role) : false;
+  const { user } = useAuth();
+  const homeRoute = user?.role === "Student" ? "/admin/calendar" : "/admin/dashboard";
 
   return (
     <Routes>
-      <Route path="/admin/dashboard" element={<ProtectedRoute allowedRoles={["SuperAdmin", "Admin", "DepartmentManager"]}><Dashboard /></ProtectedRoute>} />
-      <Route path="/admin/students" element={<ProtectedRoute allowedRoles={["SuperAdmin", "Admin"]}><StudentList /></ProtectedRoute>} />
-      <Route path="/admin/students/new" element={<ProtectedRoute allowedRoles={["SuperAdmin", "Admin"]}><StudentEntry /></ProtectedRoute>} />
-      <Route path="/admin/students/bulk-import" element={<ProtectedRoute allowedRoles={["SuperAdmin", "Admin"]}><StudentBulkImport /></ProtectedRoute>} />
-      <Route path="/admin/attendance/mark" element={<ProtectedRoute allowedRoles={["SuperAdmin", "Admin", "DepartmentManager"]}><AttendanceMark /></ProtectedRoute>} />
-      <Route path="/admin/attendance/report" element={<ProtectedRoute><AttendanceReport /></ProtectedRoute>} />
-      <Route path="/admin/department-managers" element={<ProtectedRoute allowedRoles={["SuperAdmin"]}><DepartmentManagers /></ProtectedRoute>} />
-      <Route path="/admin/calendar" element={<ProtectedRoute><Calendar /></ProtectedRoute>} />
-      <Route path="/admin/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
-      <Route path="/admin/settings" element={<ProtectedRoute allowedRoles={["SuperAdmin", "Admin"]}><Settings /></ProtectedRoute>} />
-      <Route path="*" element={<Navigate to="/admin/dashboard" replace />} />
+      <Route path="/dashboard" element={<ProtectedRoute allowedRoles={["SuperAdmin", "Admin", "DepartmentManager"]}><Dashboard /></ProtectedRoute>} />
+      <Route path="/students" element={<ProtectedRoute allowedRoles={["SuperAdmin", "Admin"]}><StudentList /></ProtectedRoute>} />
+      <Route path="/students/new" element={<ProtectedRoute allowedRoles={["SuperAdmin", "Admin"]}><StudentEntry /></ProtectedRoute>} />
+      <Route path="/students/bulk-import" element={<ProtectedRoute allowedRoles={["SuperAdmin", "Admin"]}><StudentBulkImport /></ProtectedRoute>} />
+      <Route path="/attendance/mark" element={<ProtectedRoute allowedRoles={["SuperAdmin", "Admin", "DepartmentManager"]}><AttendanceMark /></ProtectedRoute>} />
+      <Route path="/attendance/report" element={<ProtectedRoute><AttendanceReport /></ProtectedRoute>} />
+      <Route path="/department-managers" element={<ProtectedRoute allowedRoles={["SuperAdmin", "Admin", "DepartmentManager"]}><DepartmentManagers /></ProtectedRoute>} />
+      <Route path="/calendar" element={<ProtectedRoute><Calendar /></ProtectedRoute>} />
+      <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
+      <Route path="/settings" element={<ProtectedRoute allowedRoles={["SuperAdmin", "Admin"]}><Settings /></ProtectedRoute>} />
+      <Route path="*" element={<Navigate to={homeRoute} replace />} />
     </Routes>
   );
 };

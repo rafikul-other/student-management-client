@@ -1,6 +1,12 @@
 import axios from "axios";
 import BaseUrl from "../BaseUrl/BaseUrl";
 
+const authStorageKeys = ["user", "token", "type", "name", "studentId", "about"];
+
+const clearAuthStorage = () => {
+  authStorageKeys.forEach((key) => localStorage.removeItem(key));
+};
+
 const apiClient = axios.create({
   baseURL: BaseUrl,
   timeout: 15000,
@@ -24,8 +30,10 @@ apiClient.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401) {
-      localStorage.clear();
-      window.location.href = "/";
+      clearAuthStorage();
+      if (window.location.pathname !== "/") {
+        window.location.href = "/";
+      }
     }
     return Promise.reject(error);
   }

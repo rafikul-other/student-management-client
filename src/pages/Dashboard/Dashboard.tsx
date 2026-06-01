@@ -3,6 +3,7 @@ import { studentApi } from "../../api/studentApi";
 import { attendanceApi } from "../../api/attendanceApi";
 import CardDataStats from "../../components/ui/CardDataStats";
 import { AttendanceReport, Student } from "../../types";
+import { useAuth } from "../../context/AuthContext";
 import { Line } from "react-chartjs-2";
 import { Chart, CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend, Filler } from "chart.js";
 
@@ -12,15 +13,19 @@ const Dashboard: React.FC = () => {
   const [students, setStudents] = useState<Student[]>([]);
   const [report, setReport] = useState<AttendanceReport | null>(null);
   const [loading, setLoading] = useState(true);
+  const { user } = useAuth();
+  const canViewStudents = user?.role === "SuperAdmin" || user?.role === "Admin";
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [studentsRes, reportRes] = await Promise.all([
-          studentApi.getAll(),
-          attendanceApi.getReport(),
-        ]);
-        setStudents(studentsRes.data.data.students || []);
+        const reportRequest = attendanceApi.getReport();
+        const studentsRequest = canViewStudents ? studentApi.getAll() : Promise.resolve(null);
+        const [studentsRes, reportRes] = await Promise.all([studentsRequest, reportRequest]);
+
+        if (studentsRes) {
+          setStudents(studentsRes.data.data.students || []);
+        }
         setReport(reportRes.data.data);
       } catch (error) {
         console.error("Failed to fetch dashboard data:", error);
@@ -29,7 +34,7 @@ const Dashboard: React.FC = () => {
       }
     };
     fetchData();
-  }, []);
+  }, [canViewStudents]);
 
   if (loading) {
     return <div className="flex items-center justify-center h-64"><div className="animate-spin rounded-full h-12 w-12 border-4 border-primary border-t-transparent"></div></div>;
@@ -106,41 +111,43 @@ const Dashboard: React.FC = () => {
         </div>
       </div>
 
-      <div className="rounded-xl border border-stroke bg-white p-6 shadow-default dark:border-strokedark dark:bg-boxdark">
-        <h3 className="text-lg font-semibold mb-4">All Students</h3>
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead>
-              <tr className="border-b border-stroke dark:border-strokedark">
-                <th className="py-3 text-left text-sm font-semibold">Name</th>
-                <th className="py-3 text-left text-sm font-semibold">Subject</th>
-                <th className="py-3 text-center text-sm font-semibold">Present</th>
-                <th className="py-3 text-center text-sm font-semibold">Absent</th>
-                <th className="py-3 text-center text-sm font-semibold">Rate</th>
-              </tr>
-            </thead>
-            <tbody>
-              {students.slice(0, 10).map((student) => {
-                const total = (student.totalPresent || 0) + (student.totalAbsent || 0);
-                const rate = total > 0 ? ((student.totalPresent || 0) / total * 100).toFixed(1) : "0";
-                return (
-                  <tr key={student._id} className="border-b border-stroke dark:border-strokedark last:border-0">
-                    <td className="py-3 text-black dark:text-white">{student.name}</td>
-                    <td className="py-3 text-gray-500">{student.subject}</td>
-                    <td className="py-3 text-center text-green-600 font-medium">{student.totalPresent || 0}</td>
-                    <td className="py-3 text-center text-red-600 font-medium">{student.totalAbsent || 0}</td>
-                    <td className="py-3 text-center">
-                      <span className={`px-2 py-1 rounded text-xs font-medium ${parseFloat(rate) >= 75 ? "bg-green-100 text-green-700" : parseFloat(rate) >= 50 ? "bg-yellow-100 text-yellow-700" : "bg-red-100 text-red-700"}`}>
-                        {rate}%
-                      </span>
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
+      {canViewStudents && (
+        <div className="rounded-xl border border-stroke bg-white p-6 shadow-default dark:border-strokedark dark:bg-boxdark">
+          <h3 className="text-lg font-semibold mb-4">All Students</h3>
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead>
+                <tr className="border-b border-stroke dark:border-strokedark">
+                  <th className="py-3 text-left text-sm font-semibold">Name</th>
+                  <th className="py-3 text-left text-sm font-semibold">Subject</th>
+                  <th className="py-3 text-center text-sm font-semibold">Present</th>
+                  <th className="py-3 text-center text-sm font-semibold">Absent</th>
+                  <th className="py-3 text-center text-sm font-semibold">Rate</th>
+                </tr>
+              </thead>
+              <tbody>
+                {students.slice(0, 10).map((student) => {
+                  const total = (student.totalPresent || 0) + (student.totalAbsent || 0);
+                  const rate = total > 0 ? ((student.totalPresent || 0) / total * 100).toFixed(1) : "0";
+                  return (
+                    <tr key={student._id} className="border-b border-stroke dark:border-strokedark last:border-0">
+                      <td className="py-3 text-black dark:text-white">{student.name}</td>
+                      <td className="py-3 text-gray-500">{student.subject}</td>
+                      <td className="py-3 text-center text-green-600 font-medium">{student.totalPresent || 0}</td>
+                      <td className="py-3 text-center text-red-600 font-medium">{student.totalAbsent || 0}</td>
+                      <td className="py-3 text-center">
+                        <span className={`px-2 py-1 rounded text-xs font-medium ${parseFloat(rate) >= 75 ? "bg-green-100 text-green-700" : parseFloat(rate) >= 50 ? "bg-yellow-100 text-yellow-700" : "bg-red-100 text-red-700"}`}>
+                          {rate}%
+                        </span>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 };

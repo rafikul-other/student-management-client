@@ -7,24 +7,21 @@ import DefaultLayout from "../layout/DefaultLayout";
 interface ProtectedRouteProps {
   children: ReactNode;
   allowedRoles?: UserRole[];
-  showBreadcrumb?: boolean;
-  pageTitle?: string;
 }
 
 const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   children,
   allowedRoles,
-  showBreadcrumb = true,
-  pageTitle,
 }) => {
-  const { isAuthenticated, hasRole } = useAuth();
+  const { isAuthenticated, hasRole, user } = useAuth();
+  const fallbackRoute = user?.role === "Student" ? "/admin/calendar" : "/admin/dashboard";
 
   if (!isAuthenticated) {
     return <Navigate to="/" replace />;
   }
 
   if (allowedRoles && !hasRole(...allowedRoles)) {
-    return <Navigate to="/admin/dashboard" replace />;
+    return <Navigate to={fallbackRoute} replace />;
   }
 
   return (

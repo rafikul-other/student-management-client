@@ -3,9 +3,16 @@ import { useNavigate } from "react-router-dom";
 import { authApi } from "../../api/authApi";
 import { useAuth } from "../../context/AuthContext";
 import { showToast } from "../../hooks/useToast";
+import { UserRole } from "../../types";
+
+const getResponseToken = (response: any) => response?.data?.token || response?.data?.data?.token || "";
+
+const getHomeRoute = (role: UserRole) => {
+  return role === "Student" ? "/admin/calendar" : "/admin/dashboard";
+};
 
 const SignIn: React.FC = () => {
-  const [role, setRole] = useState<string>("SuperAdmin");
+  const [role, setRole] = useState<UserRole>("SuperAdmin");
   const [id, setId] = useState("");
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
@@ -21,45 +28,60 @@ const SignIn: React.FC = () => {
     try {
       let res;
       if (role === "Student") {
+        if (!name.trim() || !subject.trim()) {
+          showToast.error("Name and course are required");
+          return;
+        }
         res = await authApi.studentLogin({ name, subject, role });
         if (res.data.success) {
+          const token = getResponseToken(res);
           login({
             _id: res.data.data._id,
             name: res.data.data.name,
             subject: res.data.data.subject,
             role: "Student",
             aboutMe: res.data.data.aboutMe,
-            token: res.data.token,
+            token,
           });
           showToast.success("Login successful!");
-          navigate("/admin/calendar");
+          navigate(getHomeRoute(role), { replace: true });
         }
       } else if (role === "DepartmentManager") {
+        if (!id.trim() || !password) {
+          showToast.error("Email and password are required");
+          return;
+        }
         res = await authApi.departmentManagerLogin({ email: id, password, role });
         if (res.data.success) {
+          const token = getResponseToken(res);
           login({
             _id: res.data.data._id,
             name: res.data.data.name,
             email: res.data.data.email,
             department: res.data.data.department,
             role: "DepartmentManager",
-            token: res.data.token,
+            token,
           });
           showToast.success("Login successful!");
-          navigate("/admin/dashboard");
+          navigate(getHomeRoute(role), { replace: true });
         }
       } else {
+        if (!id.trim() || !password) {
+          showToast.error("ID and password are required");
+          return;
+        }
         res = role === "SuperAdmin"
           ? await authApi.superAdminLogin({ id, password, role })
           : await authApi.adminLogin({ id, password, role });
         if (res.data.success) {
+          const token = getResponseToken(res);
           login({
             name: role,
-            role: role as "SuperAdmin" | "Admin",
-            token: res.data.token,
+            role,
+            token,
           });
           showToast.success("Login successful!");
-          navigate("/admin/dashboard");
+          navigate(getHomeRoute(role), { replace: true });
         }
       }
     } catch (error: any) {
@@ -75,6 +97,8 @@ const SignIn: React.FC = () => {
         <div className="text-center mb-8">
           <h1 className="text-4xl font-bold text-primary mb-2">GD College</h1>
           <p className="text-gray-500 dark:text-gray-400">Student Management System</p>
+          <p className="text-red-500 dark:text-red-400">For Testing Use Admin Credentials</p>
+          <p className="text-red-500 dark:text-red-400">Role - Admin / ID - AdminTest / Password - 56789</p>
         </div>
 
         <div className="rounded-2xl border border-stroke bg-white shadow-xl dark:border-strokedark dark:bg-boxdark p-8">
@@ -85,7 +109,7 @@ const SignIn: React.FC = () => {
               <label className="mb-2.5 block text-sm font-medium text-black dark:text-white">Role</label>
               <select
                 value={role}
-                onChange={(e) => { setRole(e.target.value); setId(""); setPassword(""); }}
+                onChange={(e) => { setRole(e.target.value as UserRole); setId(""); setPassword(""); setName(""); setSubject(""); }}
                 className="w-full rounded-lg border border-stroke bg-transparent py-3 px-4 text-black outline-none focus:border-primary dark:border-form-strokedark dark:bg-form-input dark:text-white"
               >
                 <option value="SuperAdmin">Super Admin</option>

@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect, ReactNode } from "react";
+import React, { createContext, useContext, useState, ReactNode } from "react";
 import { User, UserRole } from "../types";
 
 interface AuthContextType {
@@ -11,24 +11,40 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  const [user, setUser] = useState<User | null>(null);
+const authStorageKeys = ["user", "token", "type", "name", "studentId", "about"];
 
-  useEffect(() => {
-    const storedUser = localStorage.getItem("user");
-    if (storedUser) {
-      try {
-        setUser(JSON.parse(storedUser));
-      } catch {
-        localStorage.removeItem("user");
-      }
-    }
-  }, []);
+const clearAuthStorage = () => {
+  authStorageKeys.forEach((key) => localStorage.removeItem(key));
+};
+
+const getStoredUser = (): User | null => {
+  const storedUser = localStorage.getItem("user");
+  const token = localStorage.getItem("token");
+
+  if (!storedUser || !token) {
+    clearAuthStorage();
+    return null;
+  }
+
+  try {
+    return { ...JSON.parse(storedUser), token };
+  } catch {
+    clearAuthStorage();
+    return null;
+  }
+};
+
+export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
+  const [user, setUser] = useState<User | null>(() => getStoredUser());
 
   const login = (userData: User) => {
+    if (!userData.token) {
+      throw new Error("Login response did not include an access token");
+    }
+
     setUser(userData);
     localStorage.setItem("user", JSON.stringify(userData));
-    localStorage.setItem("token", userData.token || "");
+    localStorage.setItem("token", userData.token);
     localStorage.setItem("type", userData.role);
     localStorage.setItem("name", userData.name || "");
     if (userData._id) localStorage.setItem("studentId", userData._id);
@@ -37,7 +53,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   const logout = () => {
     setUser(null);
-    localStorage.clear();
+    clearAuthStorage();
     window.location.href = "/";
   };
 

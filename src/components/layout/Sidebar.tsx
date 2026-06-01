@@ -1,4 +1,3 @@
-import React, { useState } from "react";
 import { NavLink, useLocation } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import { useRBAC } from "../../hooks/useRBAC";
@@ -6,9 +5,8 @@ import { useRBAC } from "../../hooks/useRBAC";
 const Sidebar = ({ sidebarOpen, setSidebarOpen }: { sidebarOpen: boolean; setSidebarOpen: (v: boolean) => void }) => {
   const location = useLocation();
   const { pathname } = location;
-  const { user, logout } = useAuth();
-  const { isAdmin, isSuperAdmin, isDepartmentManager, isStudent } = useRBAC();
-  const [sidebarExpanded, setSidebarExpanded] = useState(false);
+  const { logout } = useAuth();
+  const { isAdmin, isSuperAdmin, isDepartmentManager } = useRBAC();
 
   return (
     <aside className={`fixed left-0 top-0 z-50 flex h-screen w-72 flex-col bg-boxdark duration-300 ease-linear lg:static lg:translate-x-0 ${sidebarOpen ? "translate-x-0" : "-translate-x-full"}`}>
@@ -41,7 +39,7 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen }: { sidebarOpen: boolean; setSid
                 </NavLink>
               </li>
               <li>
-                <NavLink to="/admin/students/new" className={`flex items-center gap-3 rounded-sm py-2.5 px-4 font-medium text-bodydark1 duration-300 hover:bg-meta-4 ${pathname.includes("studentEntry") ? "bg-meta-4" : ""}`}>
+                <NavLink to="/admin/students/new" className={`flex items-center gap-3 rounded-sm py-2.5 px-4 font-medium text-bodydark1 duration-300 hover:bg-meta-4 ${pathname.includes("students/new") ? "bg-meta-4" : ""}`}>
                   <svg className="fill-current" width="18" height="18" viewBox="0 0 18 18"><path d="M9 7.791C11.081 7.791 12.769 6.159 12.769 4.134C12.769 2.109 11.081.478 9 .478C6.919.478 5.231 2.109 5.231 4.134C5.231 6.159 6.919 7.791 9 7.791ZM9 1.772C10.378 1.772 11.503 2.841 11.503 4.163C11.503 5.484 10.378 6.553 9 6.553C7.622 6.553 6.497 5.484 6.497 4.163C6.497 2.841 7.622 1.772 9 1.772Z" fill=""/><path d="M10.828 9.056H7.172C4.163 9.056 1.716 11.531 1.716 14.541V16.875C1.716 17.213 1.997 17.522 2.363 17.522C2.728 17.522 3.01 17.241 3.01 16.875V14.541C3.01 12.234 4.894 10.322 7.228 10.322H10.856C13.163 10.322 15.075 12.206 15.075 14.541V16.875C15.075 17.213 15.356 17.522 15.722 17.522C16.088 17.522 16.369 17.241 16.369 16.875V14.541C16.285 11.531 13.838 9.056 10.828 9.056Z" fill=""/></svg>
                   Add Student
                 </NavLink>
@@ -52,12 +50,14 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen }: { sidebarOpen: boolean; setSid
                   Bulk Import
                 </NavLink>
               </li>
-              <li>
-                <NavLink to="/admin/department-managers" className={`flex items-center gap-3 rounded-sm py-2.5 px-4 font-medium text-bodydark1 duration-300 hover:bg-meta-4 ${pathname.includes("department-managers") ? "bg-meta-4" : ""}`}>
-                  <svg className="fill-current" width="18" height="18" viewBox="0 0 18 18"><path d="M9 7.791C11.081 7.791 12.769 6.159 12.769 4.134C12.769 2.109 11.081.478 9 .478C6.919.478 5.231 2.109 5.231 4.134C5.231 6.159 6.919 7.791 9 7.791ZM9 1.772C10.378 1.772 11.503 2.841 11.503 4.163C11.503 5.484 10.378 6.553 9 6.553C7.622 6.553 6.497 5.484 6.497 4.163C6.497 2.841 7.622 1.772 9 1.772Z" fill=""/><path d="M10.828 9.056H7.172C4.163 9.056 1.716 11.531 1.716 14.541V16.875C1.716 17.213 1.997 17.522 2.363 17.522C2.728 17.522 3.01 17.241 3.01 16.875V14.541C3.01 12.234 4.894 10.322 7.228 10.322H10.856C13.163 10.322 15.075 12.206 15.075 14.541V16.875C15.075 17.213 15.356 17.522 15.722 17.522C16.088 17.522 16.369 17.241 16.369 16.875V14.541C16.285 11.531 13.838 9.056 10.828 9.056Z" fill=""/></svg>
-                  Managers
-                </NavLink>
-              </li>
+              {(isSuperAdmin || isAdmin) && (
+                <li>
+                  <NavLink to="/admin/department-managers" className={`flex items-center gap-3 rounded-sm py-2.5 px-4 font-medium text-bodydark1 duration-300 hover:bg-meta-4 ${pathname.includes("department-managers") ? "bg-meta-4" : ""}`}>
+                    <svg className="fill-current" width="18" height="18" viewBox="0 0 18 18"><path d="M9 7.791C11.081 7.791 12.769 6.159 12.769 4.134C12.769 2.109 11.081.478 9 .478C6.919.478 5.231 2.109 5.231 4.134C5.231 6.159 6.919 7.791 9 7.791ZM9 1.772C10.378 1.772 11.503 2.841 11.503 4.163C11.503 5.484 10.378 6.553 9 6.553C7.622 6.553 6.497 5.484 6.497 4.163C6.497 2.841 7.622 1.772 9 1.772Z" fill=""/><path d="M10.828 9.056H7.172C4.163 9.056 1.716 11.531 1.716 14.541V16.875C1.716 17.213 1.997 17.522 2.363 17.522C2.728 17.522 3.01 17.241 3.01 16.875V14.541C3.01 12.234 4.894 10.322 7.228 10.322H10.856C13.163 10.322 15.075 12.206 15.075 14.541V16.875C15.075 17.213 15.356 17.522 15.722 17.522C16.088 17.522 16.369 17.241 16.369 16.875V14.541C16.285 11.531 13.838 9.056 10.828 9.056Z" fill=""/></svg>
+                    Managers
+                  </NavLink>
+                </li>
+              )}
               <li>
                 <NavLink to="/admin/settings" className={`flex items-center gap-3 rounded-sm py-2.5 px-4 font-medium text-bodydark1 duration-300 hover:bg-meta-4 ${pathname.includes("settings") ? "bg-meta-4" : ""}`}>
                   <svg className="fill-current" width="18" height="18" viewBox="0 0 18 18"><path d="M9 7.791C11.081 7.791 12.769 6.159 12.769 4.134C12.769 2.109 11.081.478 9 .478C6.919.478 5.231 2.109 5.231 4.134C5.231 6.159 6.919 7.791 9 7.791ZM9 1.772C10.378 1.772 11.503 2.841 11.503 4.163C11.503 5.484 10.378 6.553 9 6.553C7.622 6.553 6.497 5.484 6.497 4.163C6.497 2.841 7.622 1.772 9 1.772Z" fill=""/><path d="M10.828 9.056H7.172C4.163 9.056 1.716 11.531 1.716 14.541V16.875C1.716 17.213 1.997 17.522 2.363 17.522C2.728 17.522 3.01 17.241 3.01 16.875V14.541C3.01 12.234 4.894 10.322 7.228 10.322H10.856C13.163 10.322 15.075 12.206 15.075 14.541V16.875C15.075 17.213 15.356 17.522 15.722 17.522C16.088 17.522 16.369 17.241 16.369 16.875V14.541C16.285 11.531 13.838 9.056 10.828 9.056Z" fill=""/></svg>

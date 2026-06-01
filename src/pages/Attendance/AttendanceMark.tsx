@@ -3,7 +3,7 @@ import { attendanceApi } from "../../api/attendanceApi";
 import { showToast } from "../../hooks/useToast";
 
 const AttendanceMark: React.FC = () => {
-  const [form, setForm] = useState({ name: "", subject: "", date: "", present: "Present" });
+  const [form, setForm] = useState({ name: "", subject: "", date: new Date().toISOString().split("T")[0], present: "Present" });
   const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
