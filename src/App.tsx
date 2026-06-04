@@ -5,6 +5,7 @@ import SignIn from "./pages/Authentication/SignIn";
 import AppRouter from "./AppRouter";
 import NotFound from "./components/NotFound";
 import { AuthProvider, useAuth } from "./context/AuthContext";
+import { ColorModeProvider } from "./context/ColorModeContext";
 import { ErrorBoundary } from "./components/common/ErrorBoundary";
 import { ToastProvider } from "./hooks/useToast";
 
@@ -33,17 +34,19 @@ const App = () => {
   return (
     <ErrorBoundary>
       <AuthProvider>
-        <ToastProvider>
-          {loading ? (
-            <Loader />
-          ) : (
-            <Routes>
-              <Route path="/" element={<SignInRoute />} />
-              <Route path="/admin/*" element={<AppRouter />} />
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-          )}
-        </ToastProvider>
+        <ColorModeProvider>
+          <ToastProvider>
+            {loading ? (
+              <Loader />
+            ) : (
+              <Routes>
+                <Route path="/" element={<SignInRoute />} />
+                <Route path="/admin/*" element={<AppRouter />} />
+                <Route path="*" element={<NotFound />} />
+              </Routes>
+            )}
+          </ToastProvider>
+        </ColorModeProvider>
       </AuthProvider>
     </ErrorBoundary>
   );
