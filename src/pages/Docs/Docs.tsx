@@ -130,7 +130,7 @@ const Docs: React.FC = () => {
             <h2 className="text-xl font-bold text-black dark:text-white mb-4">📞 Support</h2>
             <p className="text-sm text-gray-600 dark:text-gray-400">
               For technical issues or feature requests, please contact your system administrator or submit a message through the
-              platform's built-in messaging system.
+              platform's built-in messaging system. Or connect with rafikul.career@gmail.com
             </p>
           </section>
 
