@@ -10,7 +10,7 @@ interface Admin {
   adminId: string;
   isActive: boolean;
   createdAt: string;
-  assignedManager?: { _id: string; name: string; department?: string } | null;
+  assignedManagers?: Array<{ _id: string; name: string; department?: string }>;
 }
 
 interface Manager {
@@ -19,15 +19,122 @@ interface Manager {
   department: string;
 }
 
+interface SearchableMultiSelectProps {
+  label: string;
+  selectedIds: string[];
+  onChange: (ids: string[]) => void;
+  options: Manager[];
+}
+
+const SearchableMultiSelect: React.FC<SearchableMultiSelectProps> = ({ label, selectedIds, onChange, options }) => {
+  const [isOpen, setIsOpen] = useState(false);
+  const [search, setSearch] = useState("");
+
+  const filteredOptions = options.filter(
+    (opt) =>
+      opt.name.toLowerCase().includes(search.toLowerCase()) ||
+      opt.department.toLowerCase().includes(search.toLowerCase())
+  );
+
+  const selectedNames = options
+    .filter((opt) => selectedIds.includes(opt._id))
+    .map((opt) => `${opt.name} (${opt.department})`);
+
+  const handleToggle = (id: string) => {
+    if (selectedIds.includes(id)) {
+      onChange(selectedIds.filter((item) => item !== id));
+    } else {
+      onChange([...selectedIds, id]);
+    }
+  };
+
+  useEffect(() => {
+    if (!isOpen) return;
+    const handleClickOutside = (e: MouseEvent) => {
+      const target = e.target as HTMLElement;
+      if (!target.closest(".searchable-multi-select-container")) {
+        setIsOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [isOpen]);
+
+  return (
+    <div className="searchable-multi-select-container relative">
+      <label className="mb-2 block text-sm font-medium text-black dark:text-white">
+        {label}
+      </label>
+      <button
+        type="button"
+        onClick={() => setIsOpen(!isOpen)}
+        className="w-full flex items-center justify-between rounded-lg border border-stroke bg-transparent py-3 px-4 text-left text-black outline-none focus:border-primary dark:border-form-strokedark dark:bg-form-input dark:text-white cursor-pointer"
+      >
+        <span className="truncate text-sm pr-4">
+          {selectedNames.length === 0
+            ? "-- Select Managers --"
+            : `${selectedNames.length} selected (${selectedNames.slice(0, 2).join(", ")}${selectedNames.length > 2 ? "..." : ""})`}
+        </span>
+        <span className="text-gray-400 text-xs">▼</span>
+      </button>
+
+      {isOpen && (
+        <div className="absolute left-0 mt-2 z-50 w-full rounded-lg border border-stroke bg-white p-3 shadow-lg dark:border-form-strokedark dark:bg-boxdark">
+          <input
+            type="text"
+            placeholder="Search managers..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="mb-2.5 w-full rounded-md border border-stroke bg-transparent py-2 px-3 text-sm text-black outline-none focus:border-primary dark:border-form-strokedark dark:bg-form-input dark:text-white"
+          />
+          <div className="max-h-40 overflow-y-auto space-y-1">
+            {filteredOptions.length === 0 ? (
+              <p className="text-sm text-gray-400 py-1 text-center">No managers found</p>
+            ) : (
+              filteredOptions.map((opt) => (
+                <label
+                  key={opt._id}
+                  className="flex items-center gap-2.5 py-1.5 px-2 cursor-pointer hover:bg-gray-1 dark:hover:bg-meta-4/30 rounded transition-colors"
+                >
+                  <input
+                    type="checkbox"
+                    checked={selectedIds.includes(opt._id)}
+                    onChange={() => handleToggle(opt._id)}
+                    className="w-4 h-4 rounded border-gray-300 text-primary focus:ring-primary cursor-pointer"
+                  />
+                  <span className="text-sm text-black dark:text-white">
+                    {opt.name} ({opt.department})
+                  </span>
+                </label>
+              ))
+            )}
+          </div>
+          {selectedIds.length > 0 && (
+            <div className="mt-2.5 pt-2 border-t border-stroke dark:border-form-strokedark flex justify-end">
+              <button
+                type="button"
+                onClick={() => onChange([])}
+                className="text-xs text-red-500 hover:text-red-700 font-medium transition-colors cursor-pointer"
+              >
+                Clear all
+              </button>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+};
+
 const Admins: React.FC = () => {
   const [admins, setAdmins] = useState<Admin[]>([]);
   const [managers, setManagers] = useState<Manager[]>([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
-  const [form, setForm] = useState({ name: "", adminId: "", email: "", password: "", assignedManager: "" });
+  const [form, setForm] = useState({ name: "", adminId: "", email: "", password: "", assignedManagers: [] as string[] });
   const [submitting, setSubmitting] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [editForm, setEditForm] = useState({ name: "", adminId: "", email: "", password: "", assignedManager: "" });
+  const [editForm, setEditForm] = useState({ name: "", adminId: "", email: "", password: "", assignedManagers: [] as string[] });
   const [search, setSearch] = useState("");
 
   useEffect(() => {
@@ -61,11 +168,11 @@ const Admins: React.FC = () => {
     try {
       const payload: any = { name: form.name, adminId: form.adminId, password: form.password };
       if (form.email) payload.email = form.email;
-      if (form.assignedManager) payload.assignedManager = form.assignedManager;
+      if (form.assignedManagers.length > 0) payload.assignedManagers = form.assignedManagers;
       const res = await apiClient.post(ENDPOINTS.admins.create, payload);
       setAdmins((prev) => [...prev, res.data.data]);
       setShowForm(false);
-      setForm({ name: "", adminId: "", email: "", password: "", assignedManager: "" });
+      setForm({ name: "", adminId: "", email: "", password: "", assignedManagers: [] });
       showToast.success("Admin created successfully");
     } catch (error: any) {
       showToast.error(error?.response?.data?.message || "Failed to create admin");
@@ -87,12 +194,12 @@ const Admins: React.FC = () => {
 
   const startEdit = (admin: Admin) => {
     setEditingId(admin._id);
-    setEditForm({ name: admin.name, adminId: admin.adminId, email: admin.email || "", password: "", assignedManager: admin.assignedManager?._id || "" });
+    setEditForm({ name: admin.name, adminId: admin.adminId, email: admin.email || "", password: "", assignedManagers: admin.assignedManagers?.map((m) => m._id) || [] });
   };
 
   const cancelEdit = () => {
     setEditingId(null);
-    setEditForm({ name: "", adminId: "", email: "", password: "", assignedManager: "" });
+    setEditForm({ name: "", adminId: "", email: "", password: "", assignedManagers: [] });
   };
 
   const handleEdit = async (id: string) => {
@@ -106,14 +213,14 @@ const Admins: React.FC = () => {
     if (editForm.password) {
       payload.password = editForm.password;
     }
-    if (editForm.assignedManager) {
-      payload.assignedManager = editForm.assignedManager;
+    if (editForm.assignedManagers.length > 0) {
+      payload.assignedManagers = editForm.assignedManagers;
     }
     try {
       const res = await apiClient.put(ENDPOINTS.admins.update(id), payload);
       setAdmins((prev) => prev.map((a) => (a._id === id ? res.data.data : a)));
       setEditingId(null);
-      setEditForm({ name: "", adminId: "", email: "", password: "", assignedManager: "" });
+      setEditForm({ name: "", adminId: "", email: "", password: "", assignedManagers: [] });
       showToast.success("Admin updated successfully");
     } catch (error: any) {
       showToast.error(error?.response?.data?.message || "Failed to update admin");
@@ -197,21 +304,12 @@ const Admins: React.FC = () => {
                   className="w-full rounded-lg border border-stroke bg-transparent py-3 px-4 text-black outline-none focus:border-primary dark:border-form-strokedark dark:bg-form-input dark:text-white"
                 />
               </div>
-              <div>
-                <label className="mb-2.5 block text-sm font-medium text-black dark:text-white">
-                  Assign Manager
-                </label>
-                <select
-                  value={form.assignedManager}
-                  onChange={(e) => setForm({ ...form, assignedManager: e.target.value })}
-                  className="w-full rounded-lg border border-stroke bg-transparent py-3 px-4 text-black outline-none focus:border-primary dark:border-form-strokedark dark:bg-form-input dark:text-white"
-                >
-                  <option value="">-- None --</option>
-                  {managers.map((m) => (
-                    <option key={m._id} value={m._id}>{m.name} ({m.department})</option>
-                  ))}
-                </select>
-              </div>
+              <SearchableMultiSelect
+                label="Assign Managers"
+                selectedIds={form.assignedManagers}
+                onChange={(ids) => setForm({ ...form, assignedManagers: ids })}
+                options={managers}
+              />
               <div className="md:col-span-2">
                 <label className="mb-2.5 block text-sm font-medium text-black dark:text-white">
                   Password <span className="text-red-500">*</span>
@@ -232,7 +330,7 @@ const Admins: React.FC = () => {
                 type="button"
                 onClick={() => {
                   setShowForm(false);
-                  setForm({ name: "", adminId: "", email: "", password: "", assignedManager: "" });
+                  setForm({ name: "", adminId: "", email: "", password: "", assignedManagers: [] });
                 }}
                 className="flex-1 cursor-pointer rounded-lg border border-stroke py-3 font-semibold text-black hover:bg-gray-2 dark:border-strokedark dark:text-white dark:hover:bg-meta-4/30 transition-colors"
               >
@@ -286,7 +384,9 @@ const Admins: React.FC = () => {
                   <td className="py-4 px-3 sm:px-6 font-medium text-black dark:text-white">{admin.adminId}</td>
                   <td className="py-4 px-3 sm:px-6 text-gray-500 dark:text-gray-400 whitespace-nowrap">{admin.email || "-"}</td>
                   <td className="py-4 px-3 sm:px-6 text-gray-500 dark:text-gray-400 whitespace-nowrap">
-                    {admin.assignedManager ? `${admin.assignedManager.name}${admin.assignedManager.department ? ` (${admin.assignedManager.department})` : ""}` : "-"}
+                    {admin.assignedManagers && admin.assignedManagers.length > 0
+                      ? admin.assignedManagers.map((m) => `${m.name}${m.department ? ` (${m.department})` : ""}`).join(", ")
+                      : "-"}
                   </td>
                   <td className="py-4 px-3 sm:px-6 text-gray-500 dark:text-gray-400 whitespace-nowrap">
                     {new Date(admin.createdAt).toLocaleDateString()}
@@ -389,19 +489,12 @@ const Admins: React.FC = () => {
                 />
               </div>
 
-              <div>
-                <label className="mb-2 block text-sm font-medium text-black dark:text-white">Assign Manager</label>
-                <select
-                  value={editForm.assignedManager}
-                  onChange={(e) => setEditForm({ ...editForm, assignedManager: e.target.value })}
-                  className="w-full rounded-lg border border-stroke bg-transparent py-2.5 px-4 text-black outline-none focus:border-primary dark:border-form-strokedark dark:bg-form-input dark:text-white"
-                >
-                  <option value="">-- None --</option>
-                  {managers.map((m) => (
-                    <option key={m._id} value={m._id}>{m.name} ({m.department})</option>
-                  ))}
-                </select>
-              </div>
+              <SearchableMultiSelect
+                label="Assign Managers"
+                selectedIds={editForm.assignedManagers}
+                onChange={(ids) => setEditForm({ ...editForm, assignedManagers: ids })}
+                options={managers}
+              />
 
               <div className="flex items-center gap-3 pt-2">
                 <button
