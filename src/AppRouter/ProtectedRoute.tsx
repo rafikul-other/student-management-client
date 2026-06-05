@@ -14,7 +14,10 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   allowedRoles,
 }) => {
   const { isAuthenticated, hasRole, user } = useAuth();
-  const fallbackRoute = user?.role === "Student" ? "/admin/calendar" : "/admin/dashboard";
+  const fallbackRoute =
+    user?.role === "Student" ? "/admin/calendar" :
+    user?.role === "DepartmentManager" ? "/admin/students" :
+    "/admin/dashboard";
 
   if (!isAuthenticated) {
     return <Navigate to="/" replace />;

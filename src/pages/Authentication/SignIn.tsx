@@ -8,7 +8,9 @@ import { UserRole } from "../../types";
 const getResponseToken = (response: any) => response?.data?.token || response?.data?.data?.token || "";
 
 const getHomeRoute = (role: UserRole) => {
-  return role === "Student" ? "/admin/calendar" : "/admin/dashboard";
+  if (role === "Student") return "/admin/calendar";
+  if (role === "DepartmentManager") return "/admin/students";
+  return "/admin/dashboard";
 };
 
 const SignIn: React.FC = () => {
@@ -96,21 +98,21 @@ const SignIn: React.FC = () => {
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
           <h1 className="text-4xl font-bold text-primary mb-2">GD College</h1>
-          <p className="text-gray-500 dark:text-gray-400">Student Management System</p>
-          <p className="text-red-500 dark:text-red-400">For Testing Use Admin Credentials</p>
-          <p className="text-red-500 dark:text-red-400">Role - Admin / ID - AdminTest / Password - 56789</p>
+          <p className="text-gray-500">Student Management System</p>
+          <p className="text-red-500">For Testing Use Admin Credentials</p>
+          <p className="text-red-500">Role - Admin / ID - AdminTest / Password - 56789</p>
         </div>
 
-        <div className="rounded-2xl border border-stroke bg-white shadow-xl dark:border-strokedark dark:bg-boxdark p-8">
-          <h2 className="text-2xl font-bold text-black dark:text-white mb-6">Sign In</h2>
+        <div className="rounded-2xl border border-stroke bg-white shadow-xl p-8">
+          <h2 className="text-2xl font-bold text-black mb-6">Sign In</h2>
 
           <form onSubmit={handleSubmit} className="space-y-5">
             <div>
-              <label className="mb-2.5 block text-sm font-medium text-black dark:text-white">Role</label>
+              <label className="mb-2.5 block text-sm font-medium text-black">Role</label>
               <select
                 value={role}
                 onChange={(e) => { setRole(e.target.value as UserRole); setId(""); setPassword(""); setName(""); setSubject(""); }}
-                className="w-full rounded-lg border border-stroke bg-transparent py-3 px-4 text-black outline-none focus:border-primary dark:border-form-strokedark dark:bg-form-input dark:text-white"
+                className="w-full rounded-lg border border-stroke bg-transparent py-3 px-4 text-black outline-none focus:border-primary"
               >
                 <option value="SuperAdmin">Super Admin</option>
                 <option value="Admin">Admin</option>
@@ -122,34 +124,34 @@ const SignIn: React.FC = () => {
             {role === "Student" ? (
               <>
                 <div>
-                  <label className="mb-2.5 block text-sm font-medium text-black dark:text-white">Name</label>
-                  <input type="text" value={name} onChange={(e) => setName(e.target.value)} placeholder="Enter your name" className="w-full rounded-lg border border-stroke bg-transparent py-3 px-4 text-black outline-none focus:border-primary dark:border-form-strokedark dark:bg-form-input dark:text-white" />
+                  <label className="mb-2.5 block text-sm font-medium text-black">Name</label>
+                  <input type="text" value={name} onChange={(e) => setName(e.target.value)} placeholder="Enter your name" className="w-full rounded-lg border border-stroke bg-transparent py-3 px-4 text-black outline-none focus:border-primary" />
                 </div>
                 <div>
-                  <label className="mb-2.5 block text-sm font-medium text-black dark:text-white">Subject / Course</label>
-                  <input type="text" value={subject} onChange={(e) => setSubject(e.target.value)} placeholder="Enter your course" className="w-full rounded-lg border border-stroke bg-transparent py-3 px-4 text-black outline-none focus:border-primary dark:border-form-strokedark dark:bg-form-input dark:text-white" />
+                  <label className="mb-2.5 block text-sm font-medium text-black">Subject / Course</label>
+                  <input type="text" value={subject} onChange={(e) => setSubject(e.target.value)} placeholder="Enter your course" className="w-full rounded-lg border border-stroke bg-transparent py-3 px-4 text-black outline-none focus:border-primary" />
                 </div>
               </>
             ) : role === "DepartmentManager" ? (
               <>
                 <div>
-                  <label className="mb-2.5 block text-sm font-medium text-black dark:text-white">Email</label>
-                  <input type="email" value={id} onChange={(e) => setId(e.target.value)} placeholder="Enter your email" className="w-full rounded-lg border border-stroke bg-transparent py-3 px-4 text-black outline-none focus:border-primary dark:border-form-strokedark dark:bg-form-input dark:text-white" />
+                  <label className="mb-2.5 block text-sm font-medium text-black">Email</label>
+                  <input type="email" value={id} onChange={(e) => setId(e.target.value)} placeholder="Enter your email" className="w-full rounded-lg border border-stroke bg-transparent py-3 px-4 text-black outline-none focus:border-primary" />
                 </div>
                 <div>
-                  <label className="mb-2.5 block text-sm font-medium text-black dark:text-white">Password</label>
-                  <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="••••••••" className="w-full rounded-lg border border-stroke bg-transparent py-3 px-4 text-black outline-none focus:border-primary dark:border-form-strokedark dark:bg-form-input dark:text-white" />
+                  <label className="mb-2.5 block text-sm font-medium text-black">Password</label>
+                  <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="••••••••" className="w-full rounded-lg border border-stroke bg-transparent py-3 px-4 text-black outline-none focus:border-primary" />
                 </div>
               </>
             ) : (
               <>
                 <div>
-                  <label className="mb-2.5 block text-sm font-medium text-black dark:text-white">ID</label>
-                  <input type="text" value={id} onChange={(e) => setId(e.target.value)} placeholder="Enter your ID" className="w-full rounded-lg border border-stroke bg-transparent py-3 px-4 text-black outline-none focus:border-primary dark:border-form-strokedark dark:bg-form-input dark:text-white" />
+                  <label className="mb-2.5 block text-sm font-medium text-black">ID</label>
+                  <input type="text" value={id} onChange={(e) => setId(e.target.value)} placeholder="Enter your ID" className="w-full rounded-lg border border-stroke bg-transparent py-3 px-4 text-black outline-none focus:border-primary" />
                 </div>
                 <div>
-                  <label className="mb-2.5 block text-sm font-medium text-black dark:text-white">Password</label>
-                  <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="••••••••" className="w-full rounded-lg border border-stroke bg-transparent py-3 px-4 text-black outline-none focus:border-primary dark:border-form-strokedark dark:bg-form-input dark:text-white" />
+                  <label className="mb-2.5 block text-sm font-medium text-black">Password</label>
+                  <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="••••••••" className="w-full rounded-lg border border-stroke bg-transparent py-3 px-4 text-black outline-none focus:border-primary" />
                 </div>
               </>
             )}

@@ -40,6 +40,14 @@ export interface DepartmentManager {
   createdAt: string;
 }
 
+export interface Admin {
+  _id: string;
+  name: string;
+  email: string;
+  isActive: boolean;
+  createdAt: string;
+}
+
 export interface AttendanceReport {
   totalStudents: number;
   totalPresent: number;

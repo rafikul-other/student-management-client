@@ -11,10 +11,10 @@ const Header = ({ sidebarOpen, setSidebarOpen }: { sidebarOpen: boolean; setSide
       <div className="flex flex-grow items-center justify-between px-4 py-4 md:px-6 2xl:px-11">
         <div className="flex items-center gap-2 lg:hidden">
           <button onClick={() => setSidebarOpen(!sidebarOpen)} className="z-50 block rounded-sm border border-stroke bg-white p-1.5 shadow-sm dark:border-strokedark dark:bg-boxdark lg:hidden">
-            <span className="relative block h-5.5 w-5.5 cursor-pointer">
-              <span className={`absolute left-0 top-0 my-1 block h-0.5 w-full rounded-sm bg-black delay-[0] duration-200 ease-in-out dark:bg-white ${!sidebarOpen && "!w-full delay-300"}`}></span>
-              <span className={`absolute left-0 top-0 my-1 block h-0.5 w-0 rounded-sm bg-black delay-150 duration-200 ease-in-out dark:bg-white ${!sidebarOpen && "delay-400 !w-full"}`}></span>
-              <span className={`absolute left-0 top-0 my-1 block h-0.5 w-0 rounded-sm bg-black delay-200 duration-200 ease-in-out dark:bg-white ${!sidebarOpen && "!w-full delay-500"}`}></span>
+            <span className="relative flex h-5.5 w-5.5 cursor-pointer items-center justify-center">
+              <span className={`absolute block h-0.5 w-full rounded-sm bg-black duration-200 ease-in-out dark:bg-white ${sidebarOpen ? "top-1/2 -translate-y-1/2 rotate-45" : "top-0"}`}></span>
+              <span className={`absolute block h-0.5 rounded-sm bg-black duration-200 ease-in-out dark:bg-white ${sidebarOpen ? "top-1/2 -translate-y-1/2 w-0 opacity-0" : "top-1/2 -translate-y-1/2 w-full"}`}></span>
+              <span className={`absolute block h-0.5 w-full rounded-sm bg-black duration-200 ease-in-out dark:bg-white ${sidebarOpen ? "top-1/2 -translate-y-1/2 -rotate-45" : "bottom-0"}`}></span>
             </span>
           </button>
         </div>

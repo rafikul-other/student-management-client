@@ -10,7 +10,9 @@ import { ErrorBoundary } from "./components/common/ErrorBoundary";
 import { ToastProvider } from "./hooks/useToast";
 
 const getHomeRoute = (role?: string) => {
-  return role === "Student" ? "/admin/calendar" : "/admin/dashboard";
+  if (role === "Student") return "/admin/calendar";
+  if (role === "DepartmentManager") return "/admin/students";
+  return "/admin/dashboard";
 };
 
 const SignInRoute = () => {

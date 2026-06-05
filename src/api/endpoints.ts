@@ -17,6 +17,8 @@ export const ENDPOINTS = {
   },
   attendance: {
     mark: "/attendance/mark",
+    selfMark: "/attendance/self-mark",
+    markById: (studentId: string) => `/attendance/${studentId}/mark`,
     update: (studentId: string) => `/attendance/${studentId}`,
     studentAttendance: (studentId: string) => `/attendance/student/${studentId}`,
     report: "/attendance/report",
@@ -27,5 +29,12 @@ export const ENDPOINTS = {
     get: (id: string) => `/department-managers/${id}`,
     update: (id: string) => `/department-managers/${id}`,
     delete: (id: string) => `/department-managers/${id}`,
+  },
+  admins: {
+    list: "/admins",
+    create: "/admins",
+    get: (id: string) => `/admins/${id}`,
+    update: (id: string) => `/admins/${id}`,
+    delete: (id: string) => `/admins/${id}`,
   },
 };
