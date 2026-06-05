@@ -9,6 +9,7 @@ export interface Message {
   toAdmin: string;
   toName: string;
   subject: string;
+  studentName: string;
   message: string;
   status: "pending" | "processing" | "done" | "rejected";
   resolution: string;
@@ -17,7 +18,7 @@ export interface Message {
 
 export const messageApi = {
   getAll: () => apiClient.get<{ data: Message[] }>(ENDPOINTS.messages.list),
-  create: (data: { subject: string; message: string }) =>
+  create: (data: { subject: string; message: string; studentName?: string }) =>
     apiClient.post(ENDPOINTS.messages.create, data),
   updateStatus: (id: string, data: { status: string; resolution?: string }) =>
     apiClient.put(ENDPOINTS.messages.updateStatus(id), data),

@@ -89,7 +89,9 @@ const StudentList: React.FC = () => {
                 <th className="py-4 px-6 text-center text-sm font-semibold">Present</th>
                 <th className="py-4 px-6 text-center text-sm font-semibold">Absent</th>
                 <th className="py-4 px-6 text-center text-sm font-semibold">Rate</th>
-                <th className="py-4 px-6 text-center text-sm font-semibold">Actions</th>
+                {user?.role !== "DepartmentManager" && (
+                  <th className="py-4 px-6 text-center text-sm font-semibold">Actions</th>
+                )}
               </tr>
             </thead>
             <tbody>
@@ -111,12 +113,14 @@ const StudentList: React.FC = () => {
                         <td className="py-4 px-6 text-center">
                           <span className={`px-2 py-1 rounded text-xs font-medium ${parseFloat(rate) >= 75 ? "bg-green-100 text-green-700" : parseFloat(rate) >= 50 ? "bg-yellow-100 text-yellow-700" : "bg-red-100 text-red-700"}`}>{rate}%</span>
                         </td>
-                        <td className="py-4 px-6 text-center">
-                          <div className="flex gap-2 justify-center">
-                            <button onClick={() => handleEdit(student._id)} className="text-green-500 hover:text-green-700 text-sm font-medium">Save</button>
-                            <button onClick={cancelEdit} className="text-gray-500 hover:text-gray-700 text-sm font-medium">Cancel</button>
-                          </div>
-                        </td>
+                        {user?.role !== "DepartmentManager" && (
+                          <td className="py-4 px-6 text-center">
+                            <div className="flex gap-2 justify-center">
+                              <button onClick={() => handleEdit(student._id)} className="text-green-500 hover:text-green-700 text-sm font-medium">Save</button>
+                              <button onClick={cancelEdit} className="text-gray-500 hover:text-gray-700 text-sm font-medium">Cancel</button>
+                            </div>
+                          </td>
+                        )}
                       </>
                     ) : (
                       <>
@@ -127,14 +131,14 @@ const StudentList: React.FC = () => {
                         <td className="py-4 px-6 text-center">
                           <span className={`px-2 py-1 rounded text-xs font-medium ${parseFloat(rate) >= 75 ? "bg-green-100 text-green-700" : parseFloat(rate) >= 50 ? "bg-yellow-100 text-yellow-700" : "bg-red-100 text-red-700"}`}>{rate}%</span>
                         </td>
-                        <td className="py-4 px-6 text-center">
-                          {user?.role !== "DepartmentManager" && (
-                          <div className="flex gap-2 justify-center">
-                            <button onClick={() => startEdit(student)} className="text-blue-500 hover:text-blue-700 text-sm font-medium">Edit</button>
-                            <button onClick={() => handleDelete(student._id)} className="text-red-500 hover:text-red-700 text-sm font-medium">Delete</button>
-                          </div>
+                        {user?.role !== "DepartmentManager" && (
+                          <td className="py-4 px-6 text-center">
+                            <div className="flex gap-2 justify-center">
+                              <button onClick={() => startEdit(student)} className="text-blue-500 hover:text-blue-700 text-sm font-medium">Edit</button>
+                              <button onClick={() => handleDelete(student._id)} className="text-red-500 hover:text-red-700 text-sm font-medium">Delete</button>
+                            </div>
+                          </td>
                         )}
-                        </td>
                       </>
                     )}
                   </tr>

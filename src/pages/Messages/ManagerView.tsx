@@ -1,13 +1,19 @@
 import React, { useEffect, useState } from "react";
 import { messageApi, Message } from "../../api/messageApi";
+import { studentApi } from "../../api/studentApi";
 import { showToast } from "../../hooks/useToast";
+import { useAuth } from "../../context/AuthContext";
+import { Student } from "../../types";
 
 const ManagerView: React.FC = () => {
+  const { user } = useAuth();
   const [messages, setMessages] = useState<Message[]>([]);
   const [loading, setLoading] = useState(true);
-  const [form, setForm] = useState({ subject: "", message: "" });
+  const [form, setForm] = useState({ studentName: "", subject: "", message: "" });
   const [sending, setSending] = useState(false);
   const [showForm, setShowForm] = useState(false);
+  const [students, setStudents] = useState<Student[]>([]);
+  const [studentSearch, setStudentSearch] = useState("");
 
   const fetchMessages = () => {
     messageApi.getAll()
@@ -16,17 +22,34 @@ const ManagerView: React.FC = () => {
       .finally(() => setLoading(false));
   };
 
+  const fetchStudents = () => {
+    studentApi.getAll()
+      .then((res) => {
+        const all: Student[] = res.data.data?.students || [];
+        const deptStudents = all.filter((s) => s.subject === user?.department);
+        setStudents(deptStudents);
+      })
+      .catch(() => {});
+  };
+
   useEffect(() => {
     fetchMessages();
+    fetchStudents();
   }, []);
+
+  const openForm = () => {
+    setForm({ studentName: "", subject: user?.department || "", message: "" });
+    setStudentSearch("");
+    setShowForm(true);
+  };
 
   const handleSend = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!form.subject || !form.message) return showToast.error("All fields are required");
+    if (!form.subject || !form.message) return showToast.error("Subject and message are required");
     setSending(true);
     try {
       await messageApi.create(form);
-      setForm({ subject: "", message: "" });
+      setForm({ studentName: "", subject: "", message: "" });
       setShowForm(false);
       fetchMessages();
       showToast.success("Message sent to admin");
@@ -36,6 +59,10 @@ const ManagerView: React.FC = () => {
       setSending(false);
     }
   };
+
+  const filteredStudents = students.filter((s) =>
+    s.name.toLowerCase().includes(studentSearch.toLowerCase())
+  );
 
   const statusBadge = (status: string) => {
     const map: Record<string, string> = {
@@ -55,10 +82,10 @@ const ManagerView: React.FC = () => {
           <p className="text-gray-500 mt-1">Send messages to your assigned administrator</p>
         </div>
         <button
-          onClick={() => setShowForm(!showForm)}
+          onClick={openForm}
           className="px-5 py-2 rounded-lg bg-primary text-white text-sm font-medium hover:bg-primary/90"
         >
-          {showForm ? "Cancel" : "+ New Message"}
+          + New Message
         </button>
       </div>
 
@@ -67,12 +94,49 @@ const ManagerView: React.FC = () => {
           <h3 className="text-lg font-semibold mb-4 text-black dark:text-white">Send Message to Admin</h3>
           <form onSubmit={handleSend} className="space-y-4">
             <div>
+              <label className="mb-2 block text-sm font-medium text-black dark:text-white">Student Name</label>
+              <input
+                type="text"
+                placeholder="Search student by name..."
+                value={studentSearch}
+                onChange={(e) => { setStudentSearch(e.target.value); setForm({ ...form, studentName: "" }); }}
+                className="w-full rounded-lg border border-stroke bg-transparent py-3 px-4 text-black outline-none focus:border-primary dark:border-form-strokedark dark:bg-form-input dark:text-white mb-2"
+              />
+              <select
+                className="w-full rounded-lg border border-stroke bg-transparent py-3 px-4 text-black outline-none focus:border-primary dark:border-form-strokedark dark:bg-form-input dark:text-white"
+                value={form.studentName}
+                onChange={(e) => setForm({ ...form, studentName: e.target.value })}
+              >
+                <option value="">-- Select a student (optional) --</option>
+                {filteredStudents.map((s) => (
+                  <option key={s._id} value={s.name}>{s.name}</option>
+                ))}
+              </select>
+              {studentSearch && filteredStudents.length === 0 && (
+                <p className="text-xs text-gray-500 mt-1">No students found for "{studentSearch}"</p>
+              )}
+            </div>
+            <div>
               <label className="mb-2 block text-sm font-medium text-black dark:text-white">Subject</label>
-              <input type="text" value={form.subject} onChange={(e) => setForm({ ...form, subject: e.target.value })} className="w-full rounded-lg border border-stroke bg-transparent py-3 px-4 text-black outline-none focus:border-primary dark:border-form-strokedark dark:bg-form-input dark:text-white" placeholder="Enter subject" required />
+              <input
+                type="text"
+                value={form.subject}
+                onChange={(e) => setForm({ ...form, subject: e.target.value })}
+                className="w-full rounded-lg border border-stroke bg-transparent py-3 px-4 text-black outline-none focus:border-primary dark:border-form-strokedark dark:bg-form-input dark:text-white"
+                placeholder="Enter subject"
+                required
+              />
             </div>
             <div>
               <label className="mb-2 block text-sm font-medium text-black dark:text-white">Message</label>
-              <textarea value={form.message} onChange={(e) => setForm({ ...form, message: e.target.value })} rows={4} className="w-full rounded-lg border border-stroke bg-transparent py-3 px-4 text-black outline-none focus:border-primary dark:border-form-strokedark dark:bg-form-input dark:text-white resize-none" placeholder="Enter your message" required />
+              <textarea
+                value={form.message}
+                onChange={(e) => setForm({ ...form, message: e.target.value })}
+                rows={4}
+                className="w-full rounded-lg border border-stroke bg-transparent py-3 px-4 text-black outline-none focus:border-primary dark:border-form-strokedark dark:bg-form-input dark:text-white resize-none"
+                placeholder="Enter your message"
+                required
+              />
             </div>
             <div className="flex gap-3">
               <button type="button" onClick={() => setShowForm(false)} className="flex-1 rounded-lg border border-stroke py-3 font-semibold text-black hover:bg-gray-2 dark:border-strokedark dark:text-white dark:hover:bg-meta-4/30">Cancel</button>
@@ -97,6 +161,9 @@ const ManagerView: React.FC = () => {
                     {statusBadge(msg.status)}
                   </div>
                   <p className="text-sm text-gray-500 mt-1">{new Date(msg.createdAt).toLocaleDateString()} {new Date(msg.createdAt).toLocaleTimeString()}</p>
+                  {msg.studentName && (
+                    <p className="text-sm text-gray-500 mt-0.5">Student: <span className="font-medium text-black dark:text-white">{msg.studentName}</span></p>
+                  )}
                   <p className="mt-3 text-gray-700 dark:text-gray-300">{msg.message}</p>
                   {msg.resolution && (
                     <div className="mt-3 rounded-lg bg-gray-50 dark:bg-meta-4/30 p-3">
