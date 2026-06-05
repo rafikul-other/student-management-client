@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { authApi } from "../../api/authApi";
 import { useAuth } from "../../context/AuthContext";
 import { showToast } from "../../hooks/useToast";
@@ -160,6 +160,15 @@ const SignIn: React.FC = () => {
               {loading ? "Signing in..." : "Sign In"}
             </button>
           </form>
+
+          <div className="mt-6 pt-5 border-t border-stroke text-center">
+            <Link
+              to="/docs"
+              className="inline-flex items-center gap-2 text-sm text-primary font-medium hover:text-primary/80 transition-colors"
+            >
+              📖 Documentation
+            </Link>
+          </div>
         </div>
       </div>
     </div>

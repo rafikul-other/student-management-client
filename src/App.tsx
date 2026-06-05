@@ -4,6 +4,7 @@ import Loader from "./common/Loader";
 import SignIn from "./pages/Authentication/SignIn";
 import AppRouter from "./AppRouter";
 import NotFound from "./components/NotFound";
+import Docs from "./pages/Docs/Docs";
 import { AuthProvider, useAuth } from "./context/AuthContext";
 import { ColorModeProvider } from "./context/ColorModeContext";
 import { ErrorBoundary } from "./components/common/ErrorBoundary";
@@ -44,6 +45,7 @@ const App = () => {
               <Routes>
                 <Route path="/" element={<SignInRoute />} />
                 <Route path="/admin/*" element={<AppRouter />} />
+                <Route path="/docs" element={<Docs />} />
                 <Route path="*" element={<NotFound />} />
               </Routes>
             )}
