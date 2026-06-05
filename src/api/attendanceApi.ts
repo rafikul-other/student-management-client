@@ -12,6 +12,6 @@ export const attendanceApi = {
     apiClient.put(ENDPOINTS.attendance.update(studentId), data),
   getStudentAttendance: (studentId: string) =>
     apiClient.get(ENDPOINTS.attendance.studentAttendance(studentId)),
-  getReport: (subject?: string) =>
-    apiClient.get(ENDPOINTS.attendance.report, { params: { subject } }),
+  getReport: (params?: { subject?: string; month?: string; year?: string }) =>
+    apiClient.get(ENDPOINTS.attendance.report, { params }),
 };

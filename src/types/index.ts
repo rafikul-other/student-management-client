@@ -14,6 +14,7 @@ export interface User {
 export interface AttendanceRecord {
   date: string;
   present: "Present" | "Absent";
+  markedBy?: "self" | "admin" | "manager";
 }
 
 export interface Student {
@@ -54,7 +55,7 @@ export interface AttendanceReport {
   totalAbsent: number;
   overallAttendanceRate: string;
   bySubject: Record<string, { total: number; present: number; absent: number; students: number }>;
-  recentRecords: Array<{ student: string; subject: string; date: string; present: string }>;
+  recentRecords: Array<{ student: string; subject: string; date: string; present: string; markedBy?: string }>;
 }
 
 export interface BulkImportResult {

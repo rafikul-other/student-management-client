@@ -276,12 +276,13 @@ const AdminCalendarView: React.FC = () => {
                       <tr className="border-b border-stroke dark:border-strokedark">
                         <th className="py-2.5 px-4 text-left text-xs font-semibold text-black dark:text-white">Date</th>
                         <th className="py-2.5 px-4 text-center text-xs font-semibold text-black dark:text-white">Status</th>
+                        <th className="py-2.5 px-4 text-center text-xs font-semibold text-black dark:text-white">Marked By</th>
                       </tr>
                     </thead>
                     <tbody>
                       {studentAttendance.length === 0 ? (
                         <tr>
-                          <td colSpan={2} className="py-4 text-center text-sm text-gray-500">No records</td>
+                          <td colSpan={3} className="py-4 text-center text-sm text-gray-500">No records</td>
                         </tr>
                       ) : (
                         studentAttendance
@@ -297,6 +298,9 @@ const AdminCalendarView: React.FC = () => {
                                 }`}>
                                   {record.present}
                                 </span>
+                              </td>
+                              <td className="py-2.5 px-4 text-center text-sm text-gray-500">
+                                {record.markedBy === "self" ? "Myself" : record.markedBy === "admin" ? "Admin" : record.markedBy === "manager" ? "Manager" : "-"}
                               </td>
                             </tr>
                           ))

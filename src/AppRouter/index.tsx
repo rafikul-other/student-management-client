@@ -12,6 +12,7 @@ import AttendanceMark from "../pages/Attendance/AttendanceMark";
 import DepartmentManagers from "../pages/DepartmentManagers/DepartmentManagers";
 import Settings from "../pages/Settings/Settings";
 import Admins from "../pages/Admins/Admins";
+import Messages from "../pages/Messages/Messages";
 
 const AppRouter = () => {
   const { user } = useAuth();
@@ -27,6 +28,7 @@ const AppRouter = () => {
       <Route path="/attendance/report" element={<ProtectedRoute allowedRoles={["SuperAdmin", "Admin", "DepartmentManager"]}><AttendanceReport /></ProtectedRoute>} />
       <Route path="/department-managers" element={<ProtectedRoute allowedRoles={["SuperAdmin", "Admin", "DepartmentManager"]}><DepartmentManagers /></ProtectedRoute>} />
       <Route path="/admins" element={<ProtectedRoute allowedRoles={["SuperAdmin"]}><Admins /></ProtectedRoute>} />
+      <Route path="/messages" element={<ProtectedRoute allowedRoles={["SuperAdmin", "Admin", "DepartmentManager"]}><Messages /></ProtectedRoute>} />
       <Route path="/calendar" element={<ProtectedRoute allowedRoles={["SuperAdmin", "Admin", "Student"]}><Calendar /></ProtectedRoute>} />
       <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
       <Route path="/settings" element={<ProtectedRoute allowedRoles={["SuperAdmin", "Admin"]}><Settings /></ProtectedRoute>} />

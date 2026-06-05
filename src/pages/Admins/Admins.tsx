@@ -9,37 +9,61 @@ interface Admin {
   email: string;
   isActive: boolean;
   createdAt: string;
+  assignedManager?: { _id: string; name: string; department?: string } | null;
+}
+
+interface Manager {
+  _id: string;
+  name: string;
+  department: string;
 }
 
 const Admins: React.FC = () => {
   const [admins, setAdmins] = useState<Admin[]>([]);
+  const [managers, setManagers] = useState<Manager[]>([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
-  const [form, setForm] = useState({ name: "", email: "", password: "" });
+  const [form, setForm] = useState({ name: "", email: "", password: "", assignedManager: "" });
   const [submitting, setSubmitting] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [editForm, setEditForm] = useState({ name: "", email: "", password: "" });
+  const [editForm, setEditForm] = useState({ name: "", email: "", password: "", assignedManager: "" });
+  const [search, setSearch] = useState("");
 
   useEffect(() => {
     fetchAdmins();
+    fetchManagers();
   }, []);
+
+  const fetchManagers = () => {
+    apiClient.get(ENDPOINTS.departmentManagers.list)
+      .then((res) => setManagers(res.data.data?.managers || []))
+      .catch(() => {});
+  };
 
   const fetchAdmins = () => {
     apiClient.get(ENDPOINTS.admins.list)
-      .then((res) => setAdmins(res.data.data.admins || []))
+      .then((res) => setAdmins(res.data.data?.admins || []))
       .catch(() => showToast.error("Failed to load admins"))
       .finally(() => setLoading(false));
   };
+
+  const filteredAdmins = admins.filter((a) => {
+    if (!search) return true;
+    const q = search.toLowerCase();
+    return a.name.toLowerCase().includes(q) || a.email.toLowerCase().includes(q);
+  });
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!form.name || !form.email || !form.password) return showToast.error("All fields are required");
     setSubmitting(true);
     try {
-      const res = await apiClient.post(ENDPOINTS.admins.create, form);
+      const payload: any = { name: form.name, email: form.email, password: form.password };
+      if (form.assignedManager) payload.assignedManager = form.assignedManager;
+      const res = await apiClient.post(ENDPOINTS.admins.create, payload);
       setAdmins((prev) => [...prev, res.data.data]);
       setShowForm(false);
-      setForm({ name: "", email: "", password: "" });
+      setForm({ name: "", email: "", password: "", assignedManager: "" });
       showToast.success("Admin created successfully");
     } catch (error: any) {
       showToast.error(error?.response?.data?.message || "Failed to create admin");
@@ -61,12 +85,12 @@ const Admins: React.FC = () => {
 
   const startEdit = (admin: Admin) => {
     setEditingId(admin._id);
-    setEditForm({ name: admin.name, email: admin.email, password: "" });
+    setEditForm({ name: admin.name, email: admin.email, password: "", assignedManager: admin.assignedManager?._id || "" });
   };
 
   const cancelEdit = () => {
     setEditingId(null);
-    setEditForm({ name: "", email: "", password: "" });
+    setEditForm({ name: "", email: "", password: "", assignedManager: "" });
   };
 
   const handleEdit = async (id: string) => {
@@ -77,11 +101,14 @@ const Admins: React.FC = () => {
     if (editForm.password) {
       payload.password = editForm.password;
     }
+    if (editForm.assignedManager) {
+      payload.assignedManager = editForm.assignedManager;
+    }
     try {
       const res = await apiClient.put(ENDPOINTS.admins.update(id), payload);
       setAdmins((prev) => prev.map((a) => (a._id === id ? res.data.data : a)));
       setEditingId(null);
-      setEditForm({ name: "", email: "", password: "" });
+      setEditForm({ name: "", email: "", password: "", assignedManager: "" });
       showToast.success("Admin updated successfully");
     } catch (error: any) {
       showToast.error(error?.response?.data?.message || "Failed to update admin");
@@ -95,13 +122,22 @@ const Admins: React.FC = () => {
           <h1 className="text-2xl font-bold text-black dark:text-white sm:text-3xl">Admins</h1>
           <p className="text-gray-500 mt-1">Manage system administrators</p>
         </div>
-        <button
-          onClick={() => setShowForm(!showForm)}
-          className="flex items-center gap-2 px-4 py-2 sm:px-5 sm:py-2.5 rounded-lg bg-primary text-white text-sm font-semibold hover:bg-primary/90 transition-colors whitespace-nowrap"
-        >
-          <span className="text-base leading-none">+</span>
-          {showForm ? "Cancel" : <span className="hidden sm:inline">Add Admin</span>}
-        </button>
+        <div className="flex gap-3 flex-wrap">
+          <input
+            type="text"
+            placeholder="Search by name or email..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="rounded-lg border border-stroke bg-transparent py-2 px-4 text-sm text-black outline-none focus:border-primary dark:border-form-strokedark dark:bg-form-input dark:text-white"
+          />
+          <button
+            onClick={() => setShowForm(!showForm)}
+            className="flex items-center gap-2 px-4 py-2 sm:px-5 sm:py-2.5 rounded-lg bg-primary text-white text-sm font-semibold hover:bg-primary/90 transition-colors whitespace-nowrap"
+          >
+            <span className="text-base leading-none">+</span>
+            {showForm ? "Cancel" : <span className="hidden sm:inline">Add Admin</span>}
+          </button>
+        </div>
       </div>
 
       {showForm && (
@@ -144,6 +180,21 @@ const Admins: React.FC = () => {
                   required
                 />
               </div>
+              <div>
+                <label className="mb-2.5 block text-sm font-medium text-black dark:text-white">
+                  Assign Manager
+                </label>
+                <select
+                  value={form.assignedManager}
+                  onChange={(e) => setForm({ ...form, assignedManager: e.target.value })}
+                  className="w-full rounded-lg border border-stroke bg-transparent py-3 px-4 text-black outline-none focus:border-primary dark:border-form-strokedark dark:bg-form-input dark:text-white"
+                >
+                  <option value="">-- None --</option>
+                  {managers.map((m) => (
+                    <option key={m._id} value={m._id}>{m.name} ({m.department})</option>
+                  ))}
+                </select>
+              </div>
               <div className="md:col-span-2">
                 <label className="mb-2.5 block text-sm font-medium text-black dark:text-white">
                   Password <span className="text-red-500">*</span>
@@ -164,7 +215,7 @@ const Admins: React.FC = () => {
                 type="button"
                 onClick={() => {
                   setShowForm(false);
-                  setForm({ name: "", email: "", password: "" });
+                  setForm({ name: "", email: "", password: "", assignedManager: "" });
                 }}
                 className="flex-1 cursor-pointer rounded-lg border border-stroke py-3 font-semibold text-black hover:bg-gray-2 dark:border-strokedark dark:text-white dark:hover:bg-meta-4/30 transition-colors"
               >
@@ -186,7 +237,7 @@ const Admins: React.FC = () => {
         <div className="flex justify-center py-12">
           <div className="animate-spin rounded-full h-12 w-12 border-4 border-primary border-t-transparent" />
         </div>
-      ) : admins.length === 0 ? (
+) : filteredAdmins.length === 0 ? (
         <div className="text-center py-12 text-gray-500">No admins found</div>
       ) : (
         <div className="rounded-xl border border-stroke bg-white shadow-default dark:border-strokedark dark:bg-boxdark overflow-x-auto">
@@ -195,12 +246,13 @@ const Admins: React.FC = () => {
               <tr className="border-b border-stroke bg-gray-2 dark:bg-meta-4 dark:border-strokedark">
                 <th className="py-4 px-3 sm:px-6 text-left text-sm font-semibold text-black dark:text-white">Name</th>
                 <th className="py-4 px-3 sm:px-6 text-left text-sm font-semibold text-black dark:text-white">Email</th>
+                <th className="py-4 px-3 sm:px-6 text-left text-sm font-semibold text-black dark:text-white">Assigned Manager</th>
                 <th className="py-4 px-3 sm:px-6 text-left text-sm font-semibold text-black dark:text-white">Created</th>
                 <th className="py-4 px-3 sm:px-6 text-center text-sm font-semibold text-black dark:text-white">Actions</th>
               </tr>
             </thead>
             <tbody>
-              {admins.map((admin) => (
+              {filteredAdmins.map((admin) => (
                 <tr
                   key={admin._id}
                   className="border-b border-stroke dark:border-strokedark hover:bg-gray-3 dark:hover:bg-meta-4/30 transition-colors"
@@ -214,6 +266,9 @@ const Admins: React.FC = () => {
                     </div>
                   </td>
                   <td className="py-4 px-3 sm:px-6 text-gray-500 dark:text-gray-400 whitespace-nowrap">{admin.email}</td>
+                  <td className="py-4 px-3 sm:px-6 text-gray-500 dark:text-gray-400 whitespace-nowrap">
+                    {admin.assignedManager ? `${admin.assignedManager.name}${admin.assignedManager.department ? ` (${admin.assignedManager.department})` : ""}` : "-"}
+                  </td>
                   <td className="py-4 px-3 sm:px-6 text-gray-500 dark:text-gray-400 whitespace-nowrap">
                     {new Date(admin.createdAt).toLocaleDateString()}
                   </td>
@@ -301,6 +356,20 @@ const Admins: React.FC = () => {
                   placeholder="Enter new password to update"
                   className="w-full rounded-lg border border-stroke bg-transparent py-2.5 px-4 text-black outline-none focus:border-primary dark:border-form-strokedark dark:bg-form-input dark:text-white"
                 />
+              </div>
+
+              <div>
+                <label className="mb-2 block text-sm font-medium text-black dark:text-white">Assign Manager</label>
+                <select
+                  value={editForm.assignedManager}
+                  onChange={(e) => setEditForm({ ...editForm, assignedManager: e.target.value })}
+                  className="w-full rounded-lg border border-stroke bg-transparent py-2.5 px-4 text-black outline-none focus:border-primary dark:border-form-strokedark dark:bg-form-input dark:text-white"
+                >
+                  <option value="">-- None --</option>
+                  {managers.map((m) => (
+                    <option key={m._id} value={m._id}>{m.name} ({m.department})</option>
+                  ))}
+                </select>
               </div>
 
               <div className="flex items-center gap-3 pt-2">

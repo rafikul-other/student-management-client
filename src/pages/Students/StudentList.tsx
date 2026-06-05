@@ -3,16 +3,24 @@ import { Link } from "react-router-dom";
 import { studentApi } from "../../api/studentApi";
 import { Student } from "../../types";
 import { showToast } from "../../hooks/useToast";
+import { useAuth } from "../../context/AuthContext";
 
 const StudentList: React.FC = () => {
+  const { user } = useAuth();
   const [students, setStudents] = useState<Student[]>([]);
   const [loading, setLoading] = useState(true);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editForm, setEditForm] = useState({ name: "", subject: "", email: "" });
+  const [search, setSearch] = useState("");
 
   useEffect(() => {
     studentApi.getAll().then((res) => setStudents(res.data.data.students || [])).catch(() => showToast.error("Failed to load students")).finally(() => setLoading(false));
   }, []);
+
+  const filtered = students.filter((s) => {
+    const q = search.toLowerCase();
+    return s.name.toLowerCase().includes(q) || s.subject.toLowerCase().includes(q);
+  });
 
   const handleDelete = async (id: string) => {
     if (!confirm("Are you sure you want to delete this student?")) return;
@@ -55,6 +63,13 @@ const StudentList: React.FC = () => {
           <p className="text-gray-500 mt-1">Manage all registered students</p>
         </div>
         <div className="flex gap-3">
+          <input
+            type="text"
+            placeholder="Search by name or subject..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="rounded-lg border border-stroke bg-transparent py-2 px-4 text-sm text-black outline-none focus:border-primary dark:border-form-strokedark dark:bg-form-input dark:text-white"
+          />
           <Link to="/admin/students/bulk-import" className="px-5 py-2 rounded-lg border border-stroke text-sm font-medium hover:bg-gray-2 dark:border-strokedark dark:hover:bg-meta-4">Bulk Import</Link>
           <Link to="/admin/students/new" className="px-5 py-2 rounded-lg bg-primary text-white text-sm font-medium hover:bg-primary/90">+ Add Student</Link>
         </div>
@@ -62,8 +77,8 @@ const StudentList: React.FC = () => {
 
       {loading ? (
         <div className="flex justify-center py-12"><div className="animate-spin rounded-full h-12 w-12 border-4 border-primary border-t-transparent" /></div>
-      ) : students.length === 0 ? (
-        <div className="text-center py-12 text-gray-500">No students found. <Link to="/admin/students/new" className="text-primary hover:underline">Add one now</Link></div>
+      ) : filtered.length === 0 ? (
+        <div className="text-center py-12 text-gray-500">No students found.</div>
       ) : (
         <div className="rounded-xl border border-stroke bg-white shadow-default dark:border-strokedark dark:bg-boxdark overflow-hidden">
           <table className="w-full">
@@ -78,7 +93,7 @@ const StudentList: React.FC = () => {
               </tr>
             </thead>
             <tbody>
-              {students.map((student) => {
+              {filtered.map((student) => {
                 const total = (student.totalPresent || 0) + (student.totalAbsent || 0);
                 const rate = total > 0 ? ((student.totalPresent || 0) / total * 100).toFixed(1) : "0";
                 return (
@@ -113,10 +128,12 @@ const StudentList: React.FC = () => {
                           <span className={`px-2 py-1 rounded text-xs font-medium ${parseFloat(rate) >= 75 ? "bg-green-100 text-green-700" : parseFloat(rate) >= 50 ? "bg-yellow-100 text-yellow-700" : "bg-red-100 text-red-700"}`}>{rate}%</span>
                         </td>
                         <td className="py-4 px-6 text-center">
+                          {user?.role !== "DepartmentManager" && (
                           <div className="flex gap-2 justify-center">
                             <button onClick={() => startEdit(student)} className="text-blue-500 hover:text-blue-700 text-sm font-medium">Edit</button>
                             <button onClick={() => handleDelete(student._id)} className="text-red-500 hover:text-red-700 text-sm font-medium">Delete</button>
                           </div>
+                        )}
                         </td>
                       </>
                     )}

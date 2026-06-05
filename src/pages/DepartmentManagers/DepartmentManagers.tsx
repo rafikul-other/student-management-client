@@ -13,6 +13,7 @@ const DepartmentManagers: React.FC = () => {
   const [submitting, setSubmitting] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editForm, setEditForm] = useState({ name: "", email: "", department: "", password: "" });
+  const [search, setSearch] = useState("");
 
   useEffect(() => {
     apiClient.get(ENDPOINTS.departmentManagers.list)
@@ -21,9 +22,12 @@ const DepartmentManagers: React.FC = () => {
       .finally(() => setLoading(false));
   }, []);
 
-  const visibleManagers = user?.role === "DepartmentManager"
-    ? managers.filter((m) => m._id === user._id)
-    : managers;
+  const visibleManagers = managers.filter((m) => {
+    if (user?.role === "DepartmentManager" && m._id !== user._id) return false;
+    if (!search) return true;
+    const q = search.toLowerCase();
+    return m.name.toLowerCase().includes(q) || m.email.toLowerCase().includes(q) || m.department.toLowerCase().includes(q);
+  });
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -103,6 +107,14 @@ const DepartmentManagers: React.FC = () => {
           </button>
         )}
       </div>
+
+      <input
+        type="text"
+        placeholder="Search by name, email, or department..."
+        value={search}
+        onChange={(e) => setSearch(e.target.value)}
+        className="rounded-lg border border-stroke bg-transparent py-2.5 px-4 text-sm text-black outline-none focus:border-primary dark:border-form-strokedark dark:bg-form-input dark:text-white w-full max-w-sm"
+      />
 
       {showForm && (
         <div className="rounded-xl border border-stroke bg-white p-5 sm:p-8 shadow-default dark:border-strokedark dark:bg-boxdark">

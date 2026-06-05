@@ -146,12 +146,15 @@ const StudentCalendarView: React.FC = () => {
               <tr className="border-b border-stroke dark:border-strokedark">
                 <th className="py-3 text-left text-sm font-semibold text-black dark:text-white">Date</th>
                 <th className="py-3 text-center text-sm font-semibold text-black dark:text-white">Status</th>
+                {(user?.role === "SuperAdmin" || user?.role === "Admin") && (
+                  <th className="py-3 text-center text-sm font-semibold text-black dark:text-white">Marked By</th>
+                )}
               </tr>
             </thead>
             <tbody>
               {sortedAttendance.length === 0 ? (
                 <tr>
-                  <td colSpan={2} className="py-6 text-center text-gray-500">No records found</td>
+                  <td colSpan={(user?.role === "SuperAdmin" || user?.role === "Admin") ? 3 : 2} className="py-6 text-center text-gray-500">No records found</td>
                 </tr>
               ) : (
                 sortedAttendance.map((record, i) => (
@@ -166,6 +169,11 @@ const StudentCalendarView: React.FC = () => {
                         {record.present}
                       </span>
                     </td>
+                    {(user?.role === "SuperAdmin" || user?.role === "Admin") && (
+                      <td className="py-3 text-center text-sm text-gray-500">
+                        {record.markedBy === "self" ? "Myself" : record.markedBy === "admin" ? "Admin" : record.markedBy === "manager" ? "Manager" : "-"}
+                      </td>
+                    )}
                   </tr>
                 ))
               )}
