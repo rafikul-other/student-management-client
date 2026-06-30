@@ -13,6 +13,29 @@ const getHomeRoute = (role: UserRole) => {
   return "/admin/dashboard";
 };
 
+const getBrowserCoords = (): Promise<{ latitude: number; longitude: number } | null> => {
+  return new Promise((resolve) => {
+    if (typeof navigator === "undefined" || !navigator.geolocation) {
+      return resolve(null);
+    }
+    const timeoutId = setTimeout(() => resolve(null), 4000);
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        clearTimeout(timeoutId);
+        resolve({
+          latitude: pos.coords.latitude,
+          longitude: pos.coords.longitude,
+        });
+      },
+      () => {
+        clearTimeout(timeoutId);
+        resolve(null);
+      },
+      { enableHighAccuracy: false, timeout: 3500, maximumAge: 60000 }
+    );
+  });
+};
+
 const SignIn: React.FC = () => {
   const [role, setRole] = useState<UserRole>("SuperAdmin");
   const [id, setId] = useState("");
@@ -27,6 +50,9 @@ const SignIn: React.FC = () => {
     e.preventDefault();
     setLoading(true);
 
+    const coords = await getBrowserCoords();
+    const locationFields = coords ? { latitude: coords.latitude, longitude: coords.longitude } : {};
+
     try {
       let res;
       if (role === "Student") {
@@ -34,7 +60,7 @@ const SignIn: React.FC = () => {
           showToast.error("Name and course are required");
           return;
         }
-        res = await authApi.studentLogin({ name, subject, role });
+        res = await authApi.studentLogin({ name, subject, role, ...locationFields });
         if (res.data.success) {
           const token = getResponseToken(res);
           login({
@@ -53,7 +79,7 @@ const SignIn: React.FC = () => {
           showToast.error("Email and password are required");
           return;
         }
-        res = await authApi.departmentManagerLogin({ email: id, password, role });
+        res = await authApi.departmentManagerLogin({ email: id, password, role, ...locationFields });
         if (res.data.success) {
           const token = getResponseToken(res);
           login({
@@ -73,8 +99,8 @@ const SignIn: React.FC = () => {
           return;
         }
         res = role === "SuperAdmin"
-          ? await authApi.superAdminLogin({ id, password, role })
-          : await authApi.adminLogin({ id, password, role });
+          ? await authApi.superAdminLogin({ id, password, role, ...locationFields })
+          : await authApi.adminLogin({ id, password, role, ...locationFields });
         if (res.data.success) {
           const token = getResponseToken(res);
           login({

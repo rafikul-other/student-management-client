@@ -64,3 +64,24 @@ export interface BulkImportResult {
   successRecords: Array<{ _id: string; name: string; subject: string }>;
   failedRecords: Array<{ name: string; subject: string; reason: string }>;
 }
+
+export interface UserLogLocation {
+  city?: string;
+  region?: string;
+  country?: string;
+  lat?: number | null;
+  lon?: number | null;
+}
+
+export interface UserLog {
+  _id: string;
+  userId: string;
+  userType: UserRole;
+  userName: string;
+  email?: string;
+  ipAddress?: string;
+  userAgent?: string;
+  location?: UserLogLocation;
+  createdAt: string;
+  updatedAt: string;
+}

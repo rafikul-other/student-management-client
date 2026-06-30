@@ -126,6 +126,35 @@ const SearchableMultiSelect: React.FC<SearchableMultiSelectProps> = ({ label, se
   );
 };
 
+const escapeCsv = (v: unknown): string => {
+  if (v === null || v === undefined) return "";
+  const s = String(v);
+  if (/[",\n\r]/.test(s)) {
+    return `"${s.replace(/"/g, '""')}"`;
+  }
+  return s;
+};
+
+const buildCsv = (rows: Array<Record<string, unknown>>, columns: string[]): string => {
+  const header = columns.map(escapeCsv).join(",");
+  const body = rows
+    .map((row) => columns.map((col) => escapeCsv(row[col])).join(","))
+    .join("\n");
+  return `${header}\n${body}`;
+};
+
+const triggerDownload = (csv: string, filename: string) => {
+  const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.setAttribute("download", filename);
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  URL.revokeObjectURL(url);
+};
+
 const Admins: React.FC = () => {
   const [admins, setAdmins] = useState<Admin[]>([]);
   const [managers, setManagers] = useState<Manager[]>([]);
@@ -136,6 +165,8 @@ const Admins: React.FC = () => {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editForm, setEditForm] = useState({ name: "", adminId: "", email: "", password: "", assignedManagers: [] as string[] });
   const [search, setSearch] = useState("");
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(25);
 
   useEffect(() => {
     fetchAdmins();
@@ -160,6 +191,49 @@ const Admins: React.FC = () => {
     const q = search.toLowerCase();
     return a.name.toLowerCase().includes(q) || a.email?.toLowerCase().includes(q) || a.adminId.toLowerCase().includes(q);
   });
+
+  const totalPages = Math.max(1, Math.ceil(filteredAdmins.length / pageSize));
+  const safePage = Math.min(page, totalPages);
+  const paginatedAdmins = filteredAdmins.slice(
+    (safePage - 1) * pageSize,
+    safePage * pageSize
+  );
+
+  const handlePageSizeChange = (newSize: number) => {
+    setPageSize(newSize);
+    setPage(1);
+  };
+
+  const handleDownloadCsv = () => {
+    if (filteredAdmins.length === 0) {
+      showToast.error("No entries to export");
+      return;
+    }
+    const startIndex = (safePage - 1) * pageSize;
+    const csvColumns = [
+      "#",
+      "Name",
+      "Admin ID",
+      "Email",
+      "Assigned Managers",
+      "Created",
+    ];
+    const rows = paginatedAdmins.map((a, i) => ({
+      "#": startIndex + i + 1,
+      Name: a.name || "",
+      "Admin ID": a.adminId || "",
+      Email: a.email || "",
+      "Assigned Managers":
+        a.assignedManagers && a.assignedManagers.length > 0
+          ? a.assignedManagers.map((m) => `${m.name}${m.department ? ` (${m.department})` : ""}`).join(", ")
+          : "",
+      Created: a.createdAt ? new Date(a.createdAt).toISOString() : "",
+    }));
+    const csv = buildCsv(rows, csvColumns);
+    const today = new Date().toISOString().slice(0, 10);
+    triggerDownload(csv, `admins-${today}.csv`);
+    showToast.success(`Exported ${paginatedAdmins.length} ${paginatedAdmins.length === 1 ? "admin" : "admins"}`);
+  };
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -232,16 +306,49 @@ const Admins: React.FC = () => {
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="text-2xl font-bold text-black dark:text-white sm:text-3xl">Admins</h1>
-          <p className="text-gray-500 mt-1">Manage system administrators</p>
+          <p className="text-gray-500 mt-1">
+            {filteredAdmins.length === 0 && !search
+              ? "Manage system administrators"
+              : `Showing ${(safePage - 1) * pageSize + 1}–${Math.min(
+                  safePage * pageSize,
+                  filteredAdmins.length
+                )} of ${filteredAdmins.length} total ${filteredAdmins.length === 1 ? "admin" : "admins"}`}
+          </p>
         </div>
-        <div className="flex gap-3 flex-wrap">
+        <div className="flex gap-2 flex-wrap">
           <input
             type="text"
             placeholder="Search by name, Admin ID, or email..."
             value={search}
-            onChange={(e) => setSearch(e.target.value)}
+            onChange={(e) => {
+              setSearch(e.target.value);
+              setPage(1);
+            }}
             className="rounded-lg border border-stroke bg-transparent py-2 px-4 text-sm text-black outline-none focus:border-primary dark:border-form-strokedark dark:bg-form-input dark:text-white"
           />
+          <select
+            value={pageSize}
+            onChange={(e) => handlePageSizeChange(Number(e.target.value))}
+            title="Entries per page"
+            className="rounded-lg border border-stroke bg-transparent py-2 px-3 text-sm text-black outline-none focus:border-primary dark:border-form-strokedark dark:bg-form-input dark:text-white"
+          >
+            <option value={25}>25 / page</option>
+            <option value={50}>50 / page</option>
+            <option value={100}>100 / page</option>
+            <option value={200}>200 / page</option>
+            <option value={500}>500 / page</option>
+          </select>
+          <button
+            onClick={handleDownloadCsv}
+            className="inline-flex items-center gap-1.5 rounded-lg bg-primary py-2 px-4 text-sm font-semibold text-white transition-colors hover:bg-primary/90 cursor-pointer"
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+              <polyline points="7 10 12 15 17 10" />
+              <line x1="12" y1="15" x2="12" y2="3" />
+            </svg>
+            Download CSV
+          </button>
           <button
             onClick={() => setShowForm(!showForm)}
             className="flex items-center gap-2 px-4 py-2 sm:px-5 sm:py-2.5 rounded-lg bg-primary text-white text-sm font-semibold hover:bg-primary/90 transition-colors whitespace-nowrap"
@@ -356,9 +463,10 @@ const Admins: React.FC = () => {
         <div className="text-center py-12 text-gray-500">No admins found</div>
       ) : (
         <div className="rounded-xl border border-stroke bg-white shadow-default dark:border-strokedark dark:bg-boxdark overflow-x-auto">
-          <table className="w-full min-w-[600px]">
+          <table className="w-full min-w-[700px]">
             <thead>
               <tr className="border-b border-stroke bg-gray-2 dark:bg-meta-4 dark:border-strokedark">
+                <th className="py-4 px-3 sm:px-6 text-left text-sm font-semibold text-black dark:text-white w-12">#</th>
                 <th className="py-4 px-3 sm:px-6 text-left text-sm font-semibold text-black dark:text-white">Name</th>
                 <th className="py-4 px-3 sm:px-6 text-left text-sm font-semibold text-black dark:text-white">Admin ID</th>
                 <th className="py-4 px-3 sm:px-6 text-left text-sm font-semibold text-black dark:text-white">Email</th>
@@ -368,11 +476,14 @@ const Admins: React.FC = () => {
               </tr>
             </thead>
             <tbody>
-              {filteredAdmins.map((admin) => (
+              {paginatedAdmins.map((admin, i) => (
                 <tr
                   key={admin._id}
                   className="border-b border-stroke dark:border-strokedark hover:bg-gray-3 dark:hover:bg-meta-4/30 transition-colors"
                 >
+                  <td className="py-4 px-3 sm:px-6 text-gray-500 dark:text-gray-400 font-mono text-xs">
+                    {(safePage - 1) * pageSize + i + 1}
+                  </td>
                   <td className="py-4 px-3 sm:px-6">
                     <div className="flex items-center gap-3">
                       <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary/10 text-sm font-medium text-primary">
@@ -411,6 +522,30 @@ const Admins: React.FC = () => {
               ))}
             </tbody>
           </table>
+        </div>
+      )}
+
+      {filteredAdmins.length > 0 && totalPages > 1 && (
+        <div className="flex items-center justify-between">
+          <p className="text-sm text-gray-500">
+            Page {safePage} of {totalPages}
+          </p>
+          <div className="flex gap-2">
+            <button
+              disabled={safePage <= 1}
+              onClick={() => setPage(safePage - 1)}
+              className="rounded-lg border border-stroke bg-transparent py-2 px-4 text-sm font-medium text-black hover:bg-gray-2 dark:border-strokedark dark:text-white dark:hover:bg-meta-4/30 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+            >
+              Prev
+            </button>
+            <button
+              disabled={safePage >= totalPages}
+              onClick={() => setPage(safePage + 1)}
+              className="rounded-lg border border-stroke bg-transparent py-2 px-4 text-sm font-medium text-black hover:bg-gray-2 dark:border-strokedark dark:text-white dark:hover:bg-meta-4/30 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+            >
+              Next
+            </button>
+          </div>
         </div>
       )}
 

@@ -42,4 +42,9 @@ export const ENDPOINTS = {
     create: "/messages",
     updateStatus: (id: string) => `/messages/${id}`,
   },
+  userLogs: {
+    list: "/user-logs",
+    update: (id: string) => `/user-logs/${id}`,
+    delete: (id: string) => `/user-logs/${id}`,
+  },
 };

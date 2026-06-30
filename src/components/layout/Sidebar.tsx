@@ -98,6 +98,14 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen }: { sidebarOpen: boolean; setSid
                   </NavLink>
                 </li>
               )}
+              {isSuperAdmin && (
+                <li>
+                  <NavLink to="/admin/user-log" className={`flex items-center gap-3 rounded-sm py-2.5 px-4 font-medium text-black dark:text-bodydark1 duration-300 hover:bg-gray-2 dark:hover:bg-meta-4 ${pathname.includes("user-log") ? "bg-gray-2 dark:bg-meta-4" : ""}`}>
+                    <svg className="fill-current" width="18" height="18" viewBox="0 0 18 18"><path d="M9 1.5C4.86 1.5 1.5 4.86 1.5 9C1.5 13.14 4.86 16.5 9 16.5C13.14 16.5 16.5 13.14 16.5 9C16.5 4.86 13.14 1.5 9 1.5ZM9 14.7C5.79 14.7 3.3 12.21 3.3 9C3.3 5.79 5.79 3.3 9 3.3C12.21 3.3 14.7 5.79 14.7 9C14.7 12.21 12.21 14.7 9 14.7ZM9.45 5.4H8.1V10.35L12.27 12.78L12.9 11.7L9.45 9.72V5.4Z" fill="" /></svg>
+                    User Log
+                  </NavLink>
+                </li>
+              )}
             </>
           )}
 

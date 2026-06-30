@@ -54,7 +54,7 @@ const Settings: React.FC = () => {
         <h3 className="font-semibold text-black dark:text-white mb-4">System Info</h3>
         <div className="space-y-2 text-sm text-gray-500">
           <p>Version: <span className="text-black dark:text-white">2.0.0</span></p>
-          <p>API: <span className="text-black dark:text-white">https://server-student.onrender.com/api/v1</span></p>
+          <p>API: <span className="text-black dark:text-white">*******</span></p>
           <p>Build: <span className="text-black dark:text-white">Production</span></p>
         </div>
       </div>
