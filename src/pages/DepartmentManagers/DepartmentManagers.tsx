@@ -4,6 +4,35 @@ import { ENDPOINTS } from "../../api/endpoints";
 import { showToast } from "../../hooks/useToast";
 import { useAuth } from "../../context/AuthContext";
 
+const escapeCsv = (v: unknown): string => {
+  if (v === null || v === undefined) return "";
+  const s = String(v);
+  if (/[",\n\r]/.test(s)) {
+    return `"${s.replace(/"/g, '""')}"`;
+  }
+  return s;
+};
+
+const buildCsv = (rows: Array<Record<string, unknown>>, columns: string[]): string => {
+  const header = columns.map(escapeCsv).join(",");
+  const body = rows
+    .map((row) => columns.map((col) => escapeCsv(row[col])).join(","))
+    .join("\n");
+  return `${header}\n${body}`;
+};
+
+const triggerDownload = (csv: string, filename: string) => {
+  const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.setAttribute("download", filename);
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  URL.revokeObjectURL(url);
+};
+
 const DepartmentManagers: React.FC = () => {
   const { user } = useAuth();
   const [managers, setManagers] = useState<any[]>([]);
@@ -14,6 +43,8 @@ const DepartmentManagers: React.FC = () => {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editForm, setEditForm] = useState({ name: "", email: "", department: "", password: "" });
   const [search, setSearch] = useState("");
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(25);
 
   useEffect(() => {
     apiClient.get(ENDPOINTS.departmentManagers.list)
@@ -28,6 +59,46 @@ const DepartmentManagers: React.FC = () => {
     const q = search.toLowerCase();
     return m.name.toLowerCase().includes(q) || m.email.toLowerCase().includes(q) || m.department.toLowerCase().includes(q);
   });
+
+  const totalPages = Math.max(1, Math.ceil(visibleManagers.length / pageSize));
+  const safePage = Math.min(page, totalPages);
+  const paginatedManagers = visibleManagers.slice(
+    (safePage - 1) * pageSize,
+    safePage * pageSize
+  );
+
+  const handlePageSizeChange = (newSize: number) => {
+    setPageSize(newSize);
+    setPage(1);
+  };
+
+  const handleDownloadCsv = () => {
+    if (paginatedManagers.length === 0) {
+      showToast.error("No entries to export");
+      return;
+    }
+    const startIndex = (safePage - 1) * pageSize;
+    const csvColumns = [
+      "#",
+      "Name",
+      "Email",
+      "Department",
+      "Created",
+    ];
+    const rows = paginatedManagers.map((m, i) => ({
+      "#": startIndex + i + 1,
+      Name: m.name || "",
+      Email: m.email || "",
+      Department: m.department || "",
+      Created: m.createdAt ? new Date(m.createdAt).toISOString() : "",
+    }));
+    const csv = buildCsv(rows, csvColumns);
+    const today = new Date().toISOString().slice(0, 10);
+    triggerDownload(csv, `department-managers-${today}.csv`);
+    showToast.success(
+      `Exported ${paginatedManagers.length} ${paginatedManagers.length === 1 ? "manager" : "managers"}`
+    );
+  };
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -95,26 +166,60 @@ const DepartmentManagers: React.FC = () => {
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="text-2xl font-bold text-black dark:text-white sm:text-3xl">Department Managers</h1>
-          <p className="text-gray-500 mt-1">Manage department heads and their access</p>
+          <p className="text-gray-500 mt-1">
+            {managers.length === 0
+              ? "Manage department heads and their access"
+              : `Showing ${(safePage - 1) * pageSize + 1}–${Math.min(
+                  safePage * pageSize,
+                  visibleManagers.length
+                )} of ${visibleManagers.length} total ${visibleManagers.length === 1 ? "manager" : "managers"}`}
+          </p>
         </div>
-        {canEditOrDelete && (
-          <button
-            onClick={() => setShowForm(!showForm)}
-            className="flex items-center gap-2 px-4 py-2 sm:px-5 sm:py-2.5 rounded-lg bg-primary text-white text-sm font-semibold hover:bg-primary/90 transition-colors whitespace-nowrap"
+        <div className="flex gap-2 flex-wrap">
+          <input
+            type="text"
+            placeholder="Search by name, email, or department..."
+            value={search}
+            onChange={(e) => {
+              setSearch(e.target.value);
+              setPage(1);
+            }}
+            className="rounded-lg border border-stroke bg-transparent py-2 px-4 text-sm text-black outline-none focus:border-primary dark:border-form-strokedark dark:bg-form-input dark:text-white"
+          />
+          <select
+            value={pageSize}
+            onChange={(e) => handlePageSizeChange(Number(e.target.value))}
+            title="Entries per page"
+            className="rounded-lg border border-stroke bg-transparent py-2 px-3 text-sm text-black outline-none focus:border-primary dark:border-form-strokedark dark:bg-form-input dark:text-white"
           >
-            <span className="text-base leading-none">+</span>
-            {showForm ? "Cancel" : <span className="hidden sm:inline">Add Manager</span>}
+            <option value={25}>25 / page</option>
+            <option value={50}>50 / page</option>
+            <option value={100}>100 / page</option>
+            <option value={200}>200 / page</option>
+            <option value={500}>500 / page</option>
+          </select>
+          <button
+            onClick={handleDownloadCsv}
+            className="inline-flex items-center gap-1.5 rounded-lg bg-primary py-2 px-4 text-sm font-semibold text-white transition-colors hover:bg-primary/90 cursor-pointer"
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+              <polyline points="7 10 12 15 17 10" />
+              <line x1="12" y1="15" x2="12" y2="3" />
+            </svg>
+            Download CSV
           </button>
-        )}
+          {canEditOrDelete && (
+            <button
+              onClick={() => setShowForm(!showForm)}
+              className="flex items-center gap-2 px-4 py-2 sm:px-5 sm:py-2.5 rounded-lg bg-primary text-white text-sm font-semibold hover:bg-primary/90 transition-colors whitespace-nowrap"
+            >
+              <span className="text-base leading-none">+</span>
+              {showForm ? "Cancel" : <span className="hidden sm:inline">Add Manager</span>}
+            </button>
+          )}
+        </div>
       </div>
-
-      <input
-        type="text"
-        placeholder="Search by name, email, or department..."
-        value={search}
-        onChange={(e) => setSearch(e.target.value)}
-        className="rounded-lg border border-stroke bg-transparent py-2.5 px-4 text-sm text-black outline-none focus:border-primary dark:border-form-strokedark dark:bg-form-input dark:text-white w-full max-w-sm"
-      />
 
       {showForm && (
         <div className="rounded-xl border border-stroke bg-white p-5 sm:p-8 shadow-default dark:border-strokedark dark:bg-boxdark">
@@ -215,9 +320,10 @@ const DepartmentManagers: React.FC = () => {
         <div className="text-center py-12 text-gray-500">No department managers found</div>
       ) : (
         <div className="rounded-xl border border-stroke bg-white shadow-default dark:border-strokedark dark:bg-boxdark overflow-x-auto">
-          <table className="w-full min-w-[650px]">
+          <table className="w-full min-w-[700px]">
             <thead>
               <tr className="border-b border-stroke bg-gray-2 dark:bg-meta-4 dark:border-strokedark">
+                <th className="py-4 px-3 sm:px-6 text-left text-sm font-semibold text-black dark:text-white w-12">#</th>
                 <th className="py-4 px-3 sm:px-6 text-left text-sm font-semibold text-black dark:text-white">Name</th>
                 <th className="py-4 px-3 sm:px-6 text-left text-sm font-semibold text-black dark:text-white">Email</th>
                 <th className="py-4 px-3 sm:px-6 text-left text-sm font-semibold text-black dark:text-white">Department</th>
@@ -227,11 +333,14 @@ const DepartmentManagers: React.FC = () => {
               </tr>
             </thead>
             <tbody>
-              {visibleManagers.map((manager) => (
+              {paginatedManagers.map((manager, i) => (
                 <tr
                   key={manager._id}
                   className="border-b border-stroke dark:border-strokedark hover:bg-gray-3 dark:hover:bg-meta-4/30 transition-colors"
                 >
+                  <td className="py-4 px-3 sm:px-6 text-gray-500 dark:text-gray-400 font-mono text-xs">
+                    {(safePage - 1) * pageSize + i + 1}
+                  </td>
                   <td className="py-4 px-3 sm:px-6">
                     <div className="flex items-center gap-3">
                       <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary/10 text-sm font-medium text-primary">
@@ -268,6 +377,30 @@ const DepartmentManagers: React.FC = () => {
               ))}
             </tbody>
           </table>
+        </div>
+      )}
+
+      {visibleManagers.length > 0 && totalPages > 1 && (
+        <div className="flex items-center justify-between">
+          <p className="text-sm text-gray-500">
+            Page {safePage} of {totalPages}
+          </p>
+          <div className="flex gap-2">
+            <button
+              disabled={safePage <= 1}
+              onClick={() => setPage(safePage - 1)}
+              className="rounded-lg border border-stroke bg-transparent py-2 px-4 text-sm font-medium text-black hover:bg-gray-2 dark:border-strokedark dark:text-white dark:hover:bg-meta-4/30 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+            >
+              Prev
+            </button>
+            <button
+              disabled={safePage >= totalPages}
+              onClick={() => setPage(safePage + 1)}
+              className="rounded-lg border border-stroke bg-transparent py-2 px-4 text-sm font-medium text-black hover:bg-gray-2 dark:border-strokedark dark:text-white dark:hover:bg-meta-4/30 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+            >
+              Next
+            </button>
+          </div>
         </div>
       )}
 
