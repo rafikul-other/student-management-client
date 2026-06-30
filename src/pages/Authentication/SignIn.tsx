@@ -13,18 +13,55 @@ const getHomeRoute = (role: UserRole) => {
   return "/admin/dashboard";
 };
 
-const getBrowserCoords = (): Promise<{ latitude: number; longitude: number } | null> => {
+const reverseGeocodeFromBrowser = async (lat: number, lon: number): Promise<{ city: string; region: string; country: string } | null> => {
+  try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 3000);
+    const res = await fetch(
+      `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json&zoom=10&accept-language=en`,
+      {
+        signal: controller.signal,
+        headers: { "User-Agent": "GDCollege/1.0" },
+      }
+    );
+    clearTimeout(timeoutId);
+    if (!res.ok) return null;
+    const data = await res.json();
+    const addr = data?.address;
+    if (!addr) return null;
+    return {
+      city: addr.city || addr.town || addr.village || addr.municipality || addr.county || addr.state_district || "",
+      region: addr.state || addr.region || addr.province || "",
+      country: addr.country || "",
+    };
+  } catch {
+    return null;
+  }
+};
+
+const getBrowserLocation = (): Promise<{
+  latitude: number;
+  longitude: number;
+  city: string;
+  region: string;
+  country: string;
+} | null> => {
   return new Promise((resolve) => {
     if (typeof navigator === "undefined" || !navigator.geolocation) {
       return resolve(null);
     }
     const timeoutId = setTimeout(() => resolve(null), 4000);
     navigator.geolocation.getCurrentPosition(
-      (pos) => {
+      async (pos) => {
         clearTimeout(timeoutId);
+        const { latitude, longitude } = pos.coords;
+        const geo = await reverseGeocodeFromBrowser(latitude, longitude);
         resolve({
-          latitude: pos.coords.latitude,
-          longitude: pos.coords.longitude,
+          latitude,
+          longitude,
+          city: geo?.city || "",
+          region: geo?.region || "",
+          country: geo?.country || "",
         });
       },
       () => {
@@ -50,8 +87,16 @@ const SignIn: React.FC = () => {
     e.preventDefault();
     setLoading(true);
 
-    const coords = await getBrowserCoords();
-    const locationFields = coords ? { latitude: coords.latitude, longitude: coords.longitude } : {};
+    const location = await getBrowserLocation();
+    const locationFields = location
+      ? {
+          latitude: location.latitude,
+          longitude: location.longitude,
+          city: location.city,
+          region: location.region,
+          country: location.country,
+        }
+      : {};
 
     try {
       let res;

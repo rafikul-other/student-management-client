@@ -4,6 +4,9 @@ import { ENDPOINTS } from "./endpoints";
 export interface LoginExtras {
   latitude?: number;
   longitude?: number;
+  city?: string;
+  region?: string;
+  country?: string;
 }
 
 export const authApi = {
