@@ -2,6 +2,35 @@ import React, { useEffect, useState } from "react";
 import { messageApi, Message } from "../../api/messageApi";
 import { showToast } from "../../hooks/useToast";
 
+const escapeCsv = (v: unknown): string => {
+  if (v === null || v === undefined) return "";
+  const s = String(v);
+  if (/[",\n\r]/.test(s)) {
+    return `"${s.replace(/"/g, '""')}"`;
+  }
+  return s;
+};
+
+const buildCsv = (rows: Array<Record<string, unknown>>, columns: string[]): string => {
+  const header = columns.map(escapeCsv).join(",");
+  const body = rows
+    .map((row) => columns.map((col) => escapeCsv(row[col])).join(","))
+    .join("\n");
+  return `${header}\n${body}`;
+};
+
+const triggerDownload = (csv: string, filename: string) => {
+  const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.setAttribute("download", filename);
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  URL.revokeObjectURL(url);
+};
+
 const SuperAdminView: React.FC = () => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [loading, setLoading] = useState(true);
@@ -9,6 +38,8 @@ const SuperAdminView: React.FC = () => {
   const [selected, setSelected] = useState<Message | null>(null);
   const [statusForm, setStatusForm] = useState({ status: "", resolution: "" });
   const [saving, setSaving] = useState(false);
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(25);
 
   const fetchMessages = () => {
     messageApi.getAll()
@@ -30,6 +61,54 @@ const SuperAdminView: React.FC = () => {
       m.toName.toLowerCase().includes(q)
     );
   });
+
+  const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize));
+  const safePage = Math.min(page, totalPages);
+  const paginatedMessages = filtered.slice(
+    (safePage - 1) * pageSize,
+    safePage * pageSize
+  );
+
+  const handlePageSizeChange = (newSize: number) => {
+    setPageSize(newSize);
+    setPage(1);
+  };
+
+  const handleDownloadCsv = () => {
+    if (paginatedMessages.length === 0) {
+      showToast.error("No entries to export");
+      return;
+    }
+    const startIndex = (safePage - 1) * pageSize;
+    const csvColumns = [
+      "#",
+      "Date",
+      "Subject",
+      "From Manager",
+      "Department",
+      "To Admin",
+      "Student",
+      "Status",
+      "Resolution",
+    ];
+    const rows = paginatedMessages.map((m, i) => ({
+      "#": startIndex + i + 1,
+      Date: m.createdAt ? new Date(m.createdAt).toISOString() : "",
+      Subject: m.subject || "",
+      "From Manager": m.fromName || "",
+      Department: m.fromDepartment || "",
+      "To Admin": m.toName || "",
+      Student: m.studentName || "",
+      Status: m.status || "",
+      Resolution: m.resolution || "",
+    }));
+    const csv = buildCsv(rows, csvColumns);
+    const today = new Date().toISOString().slice(0, 10);
+    triggerDownload(csv, `support-log-${today}.csv`);
+    showToast.success(
+      `Exported ${paginatedMessages.length} ${paginatedMessages.length === 1 ? "message" : "messages"}`
+    );
+  };
 
   const openDetail = (msg: Message) => {
     setSelected(msg);
@@ -71,15 +150,50 @@ const SuperAdminView: React.FC = () => {
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="text-2xl sm:text-3xl font-bold text-black dark:text-white">Support Log</h1>
-          <p className="text-gray-500 mt-1">All messages between managers and admins</p>
+          <p className="text-gray-500 mt-1">
+            {messages.length === 0
+              ? "All messages between managers and admins"
+              : `Showing ${(safePage - 1) * pageSize + 1}–${Math.min(
+                  safePage * pageSize,
+                  filtered.length
+                )} of ${filtered.length} total ${filtered.length === 1 ? "message" : "messages"}`}
+          </p>
         </div>
-        <input
-          type="text"
-          placeholder="Search..."
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          className="w-full sm:w-80 rounded-lg border border-stroke bg-transparent py-2.5 px-4 text-sm text-black outline-none focus:border-primary dark:border-form-strokedark dark:bg-form-input dark:text-white"
-        />
+        <div className="flex gap-2 flex-wrap">
+          <input
+            type="text"
+            placeholder="Search..."
+            value={search}
+            onChange={(e) => {
+              setSearch(e.target.value);
+              setPage(1);
+            }}
+            className="w-full sm:w-64 rounded-lg border border-stroke bg-transparent py-2.5 px-4 text-sm text-black outline-none focus:border-primary dark:border-form-strokedark dark:bg-form-input dark:text-white"
+          />
+          <select
+            value={pageSize}
+            onChange={(e) => handlePageSizeChange(Number(e.target.value))}
+            title="Entries per page"
+            className="rounded-lg border border-stroke bg-transparent py-2 px-3 text-sm text-black outline-none focus:border-primary dark:border-form-strokedark dark:bg-form-input dark:text-white"
+          >
+            <option value={25}>25 / page</option>
+            <option value={50}>50 / page</option>
+            <option value={100}>100 / page</option>
+            <option value={200}>200 / page</option>
+            <option value={500}>500 / page</option>
+          </select>
+          <button
+            onClick={handleDownloadCsv}
+            className="inline-flex items-center gap-1.5 rounded-lg bg-primary py-2 px-4 text-sm font-semibold text-white transition-colors hover:bg-primary/90 cursor-pointer"
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+              <polyline points="7 10 12 15 17 10" />
+              <line x1="12" y1="15" x2="12" y2="3" />
+            </svg>
+            Download CSV
+          </button>
+        </div>
       </div>
 
       {loading ? (
@@ -88,9 +202,10 @@ const SuperAdminView: React.FC = () => {
         <div className="text-center py-12 text-gray-500">No messages found</div>
       ) : (
         <div className="rounded-xl border border-stroke bg-white shadow-default dark:border-strokedark dark:bg-boxdark overflow-x-auto">
-          <table className="w-full min-w-[700px]">
+          <table className="w-full min-w-[800px]">
             <thead>
               <tr className="border-b border-stroke bg-gray-2 dark:bg-meta-4 dark:border-strokedark">
+                <th className="py-4 px-4 sm:px-6 text-left text-sm font-semibold text-black dark:text-white w-12">#</th>
                 <th className="py-4 px-4 sm:px-6 text-left text-sm font-semibold text-black dark:text-white">Date</th>
                 <th className="py-4 px-4 sm:px-6 text-left text-sm font-semibold text-black dark:text-white">Subject</th>
                 <th className="py-4 px-4 sm:px-6 text-left text-sm font-semibold text-black dark:text-white">Manager</th>
@@ -101,8 +216,11 @@ const SuperAdminView: React.FC = () => {
               </tr>
             </thead>
             <tbody>
-              {filtered.map((msg) => (
+              {paginatedMessages.map((msg, i) => (
                 <tr key={msg._id} className="border-b border-stroke dark:border-strokedark hover:bg-gray-3 dark:hover:bg-meta-4/30 transition-colors">
+                  <td className="py-4 px-4 sm:px-6 text-gray-500 dark:text-gray-400 font-mono text-xs">
+                    {(safePage - 1) * pageSize + i + 1}
+                  </td>
                   <td className="py-4 px-4 sm:px-6 text-sm text-gray-500 whitespace-nowrap">{new Date(msg.createdAt).toLocaleDateString()}</td>
                   <td className="py-4 px-4 sm:px-6 font-medium text-black dark:text-white">{msg.subject}</td>
                   <td className="py-4 px-4 sm:px-6 text-gray-500 whitespace-nowrap">{msg.fromName}</td>
@@ -121,6 +239,30 @@ const SuperAdminView: React.FC = () => {
               ))}
             </tbody>
           </table>
+        </div>
+      )}
+
+      {filtered.length > 0 && totalPages > 1 && (
+        <div className="flex items-center justify-between">
+          <p className="text-sm text-gray-500">
+            Page {safePage} of {totalPages}
+          </p>
+          <div className="flex gap-2">
+            <button
+              disabled={safePage <= 1}
+              onClick={() => setPage(safePage - 1)}
+              className="rounded-lg border border-stroke bg-transparent py-2 px-4 text-sm font-medium text-black hover:bg-gray-2 dark:border-strokedark dark:text-white dark:hover:bg-meta-4/30 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+            >
+              Prev
+            </button>
+            <button
+              disabled={safePage >= totalPages}
+              onClick={() => setPage(safePage + 1)}
+              className="rounded-lg border border-stroke bg-transparent py-2 px-4 text-sm font-medium text-black hover:bg-gray-2 dark:border-strokedark dark:text-white dark:hover:bg-meta-4/30 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+            >
+              Next
+            </button>
+          </div>
         </div>
       )}
 
