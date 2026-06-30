@@ -138,7 +138,9 @@ const Docs: React.FC = () => {
             <h2 className="text-xl font-bold text-black dark:text-white mb-4">📞 Support</h2>
             <p className="text-sm text-gray-600 dark:text-gray-400">
               For technical issues or feature requests, please contact your system administrator or submit a message through the
-              platform's built-in messaging system. Or connect with <a className="text-red-500 text-lg hover:underline" href="mailto:rafikul.career@gmail.com">rafikul.career@gmail.com</a>
+              platform's built-in messaging system. Or connect with <a className="text-red-500 text-lg hover:underline" href="https://mail.google.com/mail/?view=cm&fs=1&to=rafikul.career@gmail.com"
+                target="_blank"
+                rel="noopener noreferrer">rafikul.career@gmail.com</a>
             </p>
           </section>
 
