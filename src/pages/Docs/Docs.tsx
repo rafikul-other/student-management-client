@@ -16,7 +16,7 @@ const Docs: React.FC = () => {
           <div className="text-center mb-12">
             <h1 className="text-3xl sm:text-4xl font-bold text-primary mb-3">GD College</h1>
             <p className="text-xl text-gray-600 dark:text-gray-300">Student Management System</p>
-            <p className="text-gray-400 mt-2 text-sm">Version 1.0 — Documentation</p>
+            <p className="text-gray-400 mt-2 text-sm">Version 2.0 — Documentation</p>
           </div>
         </div>
 
@@ -43,6 +43,9 @@ const Docs: React.FC = () => {
                 ["🌙 Dark / Light Mode", "Toggle between dark and light themes. Preference is saved per session."],
                 ["🔐 Role-Based Access", "Four distinct roles with different permissions and navigation menus."],
                 ["📥 Bulk Import", "Upload a CSV file to register multiple students at once."],
+                ["📍 Location Tracking", "Every login captures browser geolocation and IP. SuperAdmin can view user location on Google Maps with one click. IP-based fallback with city/region/country."],
+                ["📋 User Audit Log", "SuperAdmin can view every login across all roles — who, when, from where, with what browser. Edit and hard-delete support for corrections."],
+                ["📤 CSV Export", "All tables support CSV download. Choose page size (25–500 entries), search/filter, then export visible data in one click."],
               ].map(([title, desc]) => (
                 <li key={title} className="flex gap-3 text-sm">
                   <span className="text-primary font-semibold shrink-0">{title}:</span>
@@ -65,9 +68,9 @@ const Docs: React.FC = () => {
                 </thead>
                 <tbody className="text-gray-600 dark:text-gray-400">
                   {[
-                    ["SuperAdmin", "Full System", "Manage admins, all students, all attendance, all messages, settings"],
+                    ["SuperAdmin", "Full System", "Manage admins, all students, all attendance, all messages, view/edit/delete user login audit logs, settings"],
                     ["Admin", "Management", "Manage students, mark attendance for any student, view reports, respond to manager messages"],
-                    ["DepartmentManager", "Department", "Manage own department's students, mark attendance, send messages to assigned Admin"],
+                    ["DepartmentManager", "Department", "Manage own department's students (create/list only), mark attendance, send messages to assigned Admin"],
                     ["Student", "Self", "View own attendance calendar, self-mark today's attendance, update own profile"],
                   ].map(([role, level, canDo]) => (
                     <tr key={role} className="border-b border-stroke/50 dark:border-strokedark/50 last:border-0">
@@ -92,6 +95,8 @@ const Docs: React.FC = () => {
                 ["State Management", "React Context API (AuthContext, ColorModeContext)"],
                 ["Routing", "React Router v6"],
                 ["API Layer", "Axios-based apiClient with typed endpoints"],
+                ["Geolocation", "Browser Geolocation API → Nominatim reverse geocode → ip-api.com IP fallback"],
+                ["CSV Export", "Client-side RFC 4180 CSV generation via Blob API"],
               ].map(([label, value]) => (
                 <div key={label} className="flex gap-3 text-sm">
                   <span className="font-semibold text-black dark:text-white shrink-0">{label}:</span>
@@ -114,6 +119,9 @@ const Docs: React.FC = () => {
               </p>
               <p>
                 Student self-attendance can be marked on the <strong className="text-black dark:text-white">Calendar</strong> page — click on today's date to mark your attendance.
+              </p>
+              <p>
+                Most list pages include a <strong className="text-black dark:text-white">page-size selector</strong> and a <strong className="text-black dark:text-white">Download CSV</strong> button so you can export visible data for offline analysis. Apply a search or filter first, then click Download CSV.
               </p>
             </div>
           </section>
