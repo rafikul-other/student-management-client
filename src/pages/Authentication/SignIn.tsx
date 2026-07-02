@@ -168,11 +168,11 @@ const SignIn: React.FC = () => {
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary/10 to-meta-4/10 px-4">
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold text-primary mb-2">GD College</h1>
-          <p className="text-gray-500">Student Management System</p>
-          <p className="text-gray-500">We're using free hosting, so the initial wake-up might take a few seconds, may need to try again for login. Thanks for waiting!</p>
+          <p className="text-4xl font-bold text-primary mb-2">Student Management System</p>
+          <h1 className="text-gray-500">GD College</h1>
+          <p className="text-black">We're using free hosting, so the initial wake-up might take a few seconds, may need to try again for login. Thanks for waiting!</p>
           <p className="text-red-500">For Testing Use Admin Credentials</p>
-          <p className="text-red-500">Role - Admin / ID - AdminTest / Password - 56789</p>
+          <p className="text-red-500 font-semibold">Role - Admin / ID - AdminTest / Password - 56789</p>
         </div>
 
         <div className="rounded-2xl border border-stroke bg-white shadow-xl p-8">
