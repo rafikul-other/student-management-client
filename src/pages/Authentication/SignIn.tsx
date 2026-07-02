@@ -170,6 +170,7 @@ const SignIn: React.FC = () => {
         <div className="text-center mb-8">
           <h1 className="text-4xl font-bold text-primary mb-2">GD College</h1>
           <p className="text-gray-500">Student Management System</p>
+          <p className="text-gray-500">We're using free hosting, so the initial wake-up might take a few seconds, may need to try again for login. Thanks for waiting!</p>
           <p className="text-red-500">For Testing Use Admin Credentials</p>
           <p className="text-red-500">Role - Admin / ID - AdminTest / Password - 56789</p>
         </div>
