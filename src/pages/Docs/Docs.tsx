@@ -56,7 +56,7 @@ const Docs: React.FC = () => {
             to="/"
             className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white/70 px-4 py-2 text-sm font-medium text-slate-600 backdrop-blur-md shadow-sm transition-all hover:-translate-x-0.5 hover:border-indigo-300 hover:text-indigo-600 dark:border-slate-800 dark:bg-slate-900/60 dark:text-slate-300 dark:hover:border-indigo-500 dark:hover:text-indigo-400"
           >
-            <span>←</span> Back to Login
+            <span>←</span> Back to Home
           </Link>
         </div>
 
@@ -303,7 +303,7 @@ const Docs: React.FC = () => {
             to="/"
             className="group inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-indigo-600 to-fuchsia-600 px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-indigo-500/30 transition-all hover:-translate-y-0.5 hover:shadow-xl hover:shadow-indigo-500/40"
           >
-            <span className="transition-transform group-hover:-translate-x-0.5">←</span> Back to Login
+            <span className="transition-transform group-hover:-translate-x-0.5">←</span> Back to Home
           </Link>
           <p className="mt-4 text-xs text-slate-500 dark:text-slate-500">
             Made with care · GD College · v2.0

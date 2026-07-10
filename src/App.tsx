@@ -1,25 +1,14 @@
 import React, { useEffect, useState } from "react";
-import { Navigate, Route, Routes, useLocation } from "react-router-dom";
+import { Route, Routes, useLocation } from "react-router-dom";
 import Loader from "./common/Loader";
-import SignIn from "./pages/Authentication/SignIn";
 import AppRouter from "./AppRouter";
 import NotFound from "./components/NotFound";
 import Docs from "./pages/Docs/Docs";
-import { AuthProvider, useAuth } from "./context/AuthContext";
+import Landing from "./pages/Landing/Landing";
+import { AuthProvider } from "./context/AuthContext";
 import { ColorModeProvider } from "./context/ColorModeContext";
 import { ErrorBoundary } from "./components/common/ErrorBoundary";
 import { ToastProvider } from "./hooks/useToast";
-
-const getHomeRoute = (role?: string) => {
-  if (role === "Student") return "/admin/calendar";
-  if (role === "DepartmentManager") return "/admin/students";
-  return "/admin/dashboard";
-};
-
-const SignInRoute = () => {
-  const { isAuthenticated, user } = useAuth();
-  return isAuthenticated ? <Navigate to={getHomeRoute(user?.role)} replace /> : <SignIn />;
-};
 
 const App = () => {
   const [loading, setLoading] = useState(true);
@@ -43,7 +32,7 @@ const App = () => {
               <Loader />
             ) : (
               <Routes>
-                <Route path="/" element={<SignInRoute />} />
+                <Route path="/" element={<Landing />} />
                 <Route path="/admin/*" element={<AppRouter />} />
                 <Route path="/docs" element={<Docs />} />
                 <Route path="*" element={<NotFound />} />
