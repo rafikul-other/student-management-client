@@ -30,10 +30,6 @@ const Docs: React.FC = () => {
 
         {/* Hero */}
         <div className="text-center mb-14">
-          <div className="inline-flex items-center gap-2 rounded-full border border-[#E5E7EB] bg-white px-3 py-1 text-xs font-semibold uppercase tracking-wider text-[#10B981]">
-            <span className="inline-block h-1.5 w-1.5 rounded-full bg-[#10B981]" />
-            v2.0 — Now with location tracking
-          </div>
           <h1 className="mt-5 text-4xl sm:text-6xl font-bold tracking-tight text-[#1F2937]">
             GD College
           </h1>
